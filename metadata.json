@@ -1,0 +1,6 @@
+{
+  "name": "JSArt&Decor",
+  "description": "Production-ready e-commerce platform for JSArt&Decor specializing in home furnishing, bedsheets, handmade & factory products, art & decor, wholesale & retail.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,23 @@
+# Hostinger Apache / public_html Configuration
+RewriteEngine On
+
+# 1. Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 2. Block Access to Hidden & Sensitive Files
+<FilesMatch "^\.|\.sql$|\.json$|\.env|db\.php|razorpay\.php">
+    Require all denied
+</FilesMatch>
+
+# 3. Allow Access to API Endpoints
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 4. React Single Page Application (SPA) Fallback
+RewriteRule ^ index.html [L]

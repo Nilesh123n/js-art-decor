@@ -1,0 +1,35 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Force HTTPS
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # 2. Allow extensionless PHP calls under /api/ (e.g. /api/products/get -> /api/products/get.php)
+  RewriteCond %{REQUEST_FILENAME}.php -f
+  RewriteRule ^api/(.*)$ api/$1.php [L]
+
+  # 3. Direct API requests and existing files/directories directly to backend scripts
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 4. Never fall back to index.html for unhandled /api/ calls (return 404 instead of HTML)
+  RewriteCond %{REQUEST_URI} ^/api/ [NC]
+  RewriteRule ^ - [R=404,L]
+
+  # 5. React SPA Routing Fallback (Send all non-API requests to index.html)
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Disable Directory Browsing
+Options -Indexes
+
+# Security Headers
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
