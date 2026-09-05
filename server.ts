@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import path from "path";
 import fs from "fs";
@@ -14,6 +17,28 @@ async function startServer() {
   // Serve uploads directory
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+  // Optional MySQL Connection Pool (Hostinger / Production)
+  let mysqlPool: any = null;
+  if (process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER) {
+    try {
+      const mysql = await import("mysql2/promise");
+      mysqlPool = mysql.createPool({
+        host: process.env.DB_HOST || "localhost",
+        port: Number(process.env.DB_PORT) || 3306,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASS || "",
+        database: process.env.DB_NAME,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+      });
+      console.log(`[Database] MySQL pool created for ${process.env.DB_NAME}@${process.env.DB_HOST}`);
+    } catch (err: any) {
+      console.warn(`[Database] MySQL initialization skipped (${err?.message || err}). Using in-memory store.`);
+      mysqlPool = null;
+    }
+  }
+
   // In-memory persistent database store for Express runtime
   let productsDb = [...INITIAL_PRODUCTS];
   let blogsDb = [...INITIAL_BLOGS];
@@ -27,6 +52,40 @@ async function startServer() {
   app.use("/api", (req, res, next) => {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     next();
+  });
+
+  // Database Connection Verification Endpoint
+  app.get(["/api/test_db", "/api/test_db.php"], async (req, res) => {
+    if (mysqlPool) {
+      try {
+        const [rows]: any = await mysqlPool.query("SELECT VERSION() as version");
+        const [tables]: any = await mysqlPool.query("SHOW TABLES");
+        const tableList = tables.map((t: any) => Object.values(t)[0]);
+        return res.json({
+          success: true,
+          mode: "MySQL (Node.js)",
+          database: process.env.DB_NAME,
+          host: process.env.DB_HOST,
+          mysql_version: rows[0]?.version || "connected",
+          tables_found: tableList,
+          message: "Node.js Express backend is successfully connected to MySQL database!"
+        });
+      } catch (err: any) {
+        return res.status(500).json({
+          success: false,
+          mode: "MySQL (Node.js)",
+          error: err.message,
+          hint: "Please verify DB_HOST, DB_NAME, DB_USER, DB_PASS in Hostinger .env file."
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      mode: "In-Memory / PHP Proxy",
+      message: "Node.js is running in mock mode. If deploying on Hostinger Apache/PHP, run /api/test_db.php directly.",
+      configured_db: process.env.DB_NAME || "u123456789_jsartdecor"
+    });
   });
 
   // -------------------------------------------------------------
