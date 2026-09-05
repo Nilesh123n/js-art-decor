@@ -346,10 +346,49 @@ export const ApiService = {
     return json.data || [];
   },
 
-  async updateAdminOrderStatus(id: number, orderStatus: string, paymentStatus?: string): Promise<void> {
+  async updateAdminOrderStatus(
+    id: number,
+    orderStatus: string,
+    optionsOrPayment?:
+      | string
+      | {
+          paymentStatus?: string;
+          courierPartner?: string;
+          trackingAwb?: string;
+          trackingUrl?: string;
+          estimatedDelivery?: string;
+          customerEmail?: string;
+          forceSendEmail?: boolean;
+        }
+  ): Promise<{
+    success: boolean;
+    message: string;
+    email_triggered?: boolean;
+    email_details?: {
+      recipient: string;
+      subject: string;
+      courier: string;
+      tracking_awb: string;
+      sent_at: string;
+      mode: string;
+      preview_html: string;
+    };
+    order?: Order;
+  }> {
     const url = `${API_BASE_URL}/admin/orders.php`;
     const bodyPayload: any = { id, order_status: orderStatus };
-    if (paymentStatus) bodyPayload.payment_status = paymentStatus;
+
+    if (typeof optionsOrPayment === 'string') {
+      bodyPayload.payment_status = optionsOrPayment;
+    } else if (optionsOrPayment && typeof optionsOrPayment === 'object') {
+      if (optionsOrPayment.paymentStatus) bodyPayload.payment_status = optionsOrPayment.paymentStatus;
+      if (optionsOrPayment.courierPartner) bodyPayload.courier_partner = optionsOrPayment.courierPartner;
+      if (optionsOrPayment.trackingAwb) bodyPayload.tracking_awb = optionsOrPayment.trackingAwb;
+      if (optionsOrPayment.trackingUrl) bodyPayload.tracking_url = optionsOrPayment.trackingUrl;
+      if (optionsOrPayment.estimatedDelivery) bodyPayload.estimated_delivery = optionsOrPayment.estimatedDelivery;
+      if (optionsOrPayment.customerEmail) bodyPayload.customer_email = optionsOrPayment.customerEmail;
+      if (optionsOrPayment.forceSendEmail) bodyPayload.force_send_email = optionsOrPayment.forceSendEmail;
+    }
 
     const res = await fetch(url, {
       method: 'PUT',
@@ -359,7 +398,39 @@ export const ApiService = {
       },
       body: JSON.stringify(bodyPayload)
     });
-    await handleResponse<any>(res);
+    return await handleResponse<any>(res);
+  },
+
+  async previewOrderShippingEmail(
+    id: number,
+    options?: {
+      courierPartner?: string;
+      trackingAwb?: string;
+      estimatedDelivery?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    subject: string;
+    recipient: string;
+    courier: string;
+    tracking_awb: string;
+    preview_html: string;
+  }> {
+    const url = `${API_BASE_URL}/admin/orders/email_preview.php`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCsrfHeader()
+      },
+      body: JSON.stringify({
+        id,
+        courier_partner: options?.courierPartner,
+        tracking_awb: options?.trackingAwb,
+        estimated_delivery: options?.estimatedDelivery
+      })
+    });
+    return await handleResponse<any>(res);
   },
 
   // Admin Blogs

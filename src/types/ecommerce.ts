@@ -101,6 +101,18 @@ export interface OrderItemRecord {
   subtotal: number;
 }
 
+export interface OrderEmailNotification {
+  id: string;
+  type: 'shipped' | 'confirmed' | 'delivered';
+  recipient: string;
+  subject: string;
+  sentAt: string;
+  status: 'sent' | 'simulated' | 'failed';
+  courierPartner?: string;
+  trackingAwb?: string;
+  previewHtml?: string;
+}
+
 export interface Order {
   id: number;
   orderNumber: string;
@@ -115,6 +127,13 @@ export interface Order {
   razorpayPaymentId?: string;
   orderStatus: OrderStatus;
   orderType: 'Retail' | 'Wholesale';
+  courierPartner?: string;
+  trackingAwb?: string;
+  trackingUrl?: string;
+  estimatedDelivery?: string;
+  shippedAt?: string;
+  emailNotificationSent?: boolean;
+  emailNotifications?: OrderEmailNotification[];
   createdAt: string;
   updatedAt?: string;
 }

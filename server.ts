@@ -5,7 +5,8 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { INITIAL_PRODUCTS, INITIAL_BLOGS, INITIAL_PARTNERS, DEFAULT_SITE_SETTINGS, INITIAL_BANNERS, INITIAL_SECTIONS } from "./src/data/mockData";
+import { INITIAL_PRODUCTS, INITIAL_BLOGS, INITIAL_PARTNERS, DEFAULT_SITE_SETTINGS, INITIAL_BANNERS, INITIAL_SECTIONS, INITIAL_ORDERS } from "./src/data/mockData";
+import { sendOrderShippedEmail, generateShippingEmailHtml } from "./server/emailService";
 
 const app = express();
 const PORT = Number(process.env.NODE_ENV === "production" && process.env.PORT ? process.env.PORT : 3000);
@@ -45,7 +46,7 @@ async function startServer() {
   let partnersDb = [...INITIAL_PARTNERS];
   let bannersDb = [...INITIAL_BANNERS];
   let sectionsDb = [...INITIAL_SECTIONS];
-  let ordersDb: any[] = [];
+  let ordersDb: any[] = [...INITIAL_ORDERS];
   let contactMessagesDb: any[] = [];
   let settingsDb = { ...DEFAULT_SITE_SETTINGS };
   let activeAdminSessions = new Set<string>();
@@ -682,17 +683,32 @@ async function startServer() {
   });
 
   // Admin Orders
-  app.all(["/api/admin/orders.php", "/api/admin/orders"], (req, res) => {
+  app.all(["/api/admin/orders.php", "/api/admin/orders"], async (req, res) => {
     if (req.method === "GET") {
       return res.json({ success: true, data: ordersDb });
     }
 
-    if (req.method === "PUT") {
-      const { id, order_status } = req.body;
-      const order = ordersDb.find((o) => o.id === id);
+    if (req.method === "PUT" || req.method === "POST") {
+      const {
+        id,
+        order_status,
+        payment_status,
+        courier_partner,
+        tracking_awb,
+        tracking_url,
+        estimated_delivery,
+        customer_email,
+        force_send_email
+      } = req.body;
+
+      const order = ordersDb.find((o) => o.id === id || String(o.id) === String(id));
       if (!order) {
         return res.status(404).json({ success: false, error: "Order not found." });
       }
+
+      const previousStatus = order.orderStatus;
+      const isTransitionFromProcessingToShipped = previousStatus === "Processing" && order_status === "Shipped";
+      const shouldTriggerShipmentEmail = isTransitionFromProcessingToShipped || (order_status === "Shipped" && force_send_email);
 
       // Restore stock on cancellation if not previously restored
       if (order_status === "Cancelled" && !order.stockRestored) {
@@ -703,11 +719,169 @@ async function startServer() {
         order.stockRestored = true;
       }
 
-      order.orderStatus = order_status;
-      return res.json({ success: true, message: `Order status updated to ${order_status}` });
+      if (payment_status) {
+        order.paymentStatus = payment_status;
+      }
+
+      if (customer_email && typeof customer_email === "string" && customer_email.trim()) {
+        if (!order.customer) order.customer = {};
+        order.customer.email = customer_email.trim();
+      }
+
+      // Courier & Tracking details
+      const digitsOnly = (order.orderNumber || "").replace(/[^0-9]/g, "");
+      const effectiveCourier = courier_partner || order.courierPartner || "Blue Dart Express";
+      const effectiveAwb = tracking_awb || order.trackingAwb || ("BD-" + (digitsOnly.slice(-6) || Math.floor(100000 + Math.random() * 900000)));
+      const effectiveDelivery = estimated_delivery || order.estimatedDelivery || "3 - 5 Business Days";
+      const effectiveTrackingUrl = tracking_url || order.trackingUrl || `https://ais-dev-r4nws6qqq7w2lqcez36oxg-604300792262.asia-east1.run.app/track-order?order=${encodeURIComponent(order.orderNumber)}`;
+
+      if (order_status) {
+        order.orderStatus = order_status;
+      }
+
+      let emailResult: any = null;
+
+      // Automatically trigger email notification when order moves from 'Processing' to 'Shipped'
+      if (shouldTriggerShipmentEmail) {
+        order.courierPartner = effectiveCourier;
+        order.trackingAwb = effectiveAwb;
+        order.trackingUrl = effectiveTrackingUrl;
+        order.estimatedDelivery = effectiveDelivery;
+        order.shippedAt = new Date().toISOString().replace("T", " ").substring(0, 19);
+        order.emailNotificationSent = true;
+
+        const recipientEmail = order.customer?.email || customer_email || "customer@example.com";
+
+        try {
+          emailResult = await sendOrderShippedEmail({
+            orderNumber: order.orderNumber,
+            customerName: order.customer?.fullName || "Valued Customer",
+            customerEmail: recipientEmail,
+            customerPhone: order.customer?.mobileNumber,
+            shippingAddress: order.customer?.address || "Address on file",
+            city: order.customer?.city || "Jaipur",
+            state: order.customer?.state || "Rajasthan",
+            pinCode: order.customer?.pinCode || "302001",
+            items: (order.items || []).map((it: any) => ({
+              productName: it.productName || it.product_name || "Handcrafted Decor Item",
+              sku: it.sku || "JS-ART",
+              quantity: it.quantity || 1,
+              unitPrice: it.unitPrice || it.unit_price || 0,
+              subtotal: it.subtotal || ((it.unitPrice || 0) * (it.quantity || 1))
+            })),
+            totalAmount: order.totalAmount,
+            paymentMethod: order.paymentMethod || "Online Payment",
+            courierPartner: effectiveCourier,
+            trackingAwb: effectiveAwb,
+            trackingUrl: effectiveTrackingUrl,
+            estimatedDelivery: effectiveDelivery,
+            storeName: settingsDb.store_name,
+            contactEmail: settingsDb.contact_email,
+            whatsappNumber: settingsDb.whatsapp_number
+          });
+
+          if (!Array.isArray(order.emailNotifications)) {
+            order.emailNotifications = [];
+          }
+
+          order.emailNotifications.unshift({
+            id: "notif_" + Date.now(),
+            type: "shipped",
+            recipient: recipientEmail,
+            subject: emailResult.subject,
+            sentAt: emailResult.sentAt,
+            status: emailResult.mode === "smtp" ? "sent" : "simulated",
+            courierPartner: effectiveCourier,
+            trackingAwb: effectiveAwb,
+            previewHtml: emailResult.previewHtml
+          });
+        } catch (mailErr: any) {
+          console.error("[AdminOrders] Failed to trigger shipment email notification:", mailErr);
+        }
+      }
+
+      // Sync with MySQL if database connection exists
+      if (mysqlPool) {
+        try {
+          const sql = "UPDATE orders SET order_status = ?, updated_at = NOW() WHERE id = ?";
+          await mysqlPool.query(sql, [order.orderStatus, order.id]);
+        } catch (dbErr) {
+          console.error("Error updating order in MySQL:", dbErr);
+        }
+      }
+
+      const statusMsg = isTransitionFromProcessingToShipped
+        ? `Order status moved from 'Processing' to 'Shipped'. Email notification automatically triggered to ${order.customer?.email || 'customer'}!`
+        : `Order status updated to ${order_status}`;
+
+      return res.json({
+        success: true,
+        message: statusMsg,
+        email_triggered: !!shouldTriggerShipmentEmail,
+        email_details: emailResult ? {
+          recipient: emailResult.recipient,
+          subject: emailResult.subject,
+          courier: effectiveCourier,
+          tracking_awb: effectiveAwb,
+          sent_at: emailResult.sentAt,
+          mode: emailResult.mode,
+          preview_html: emailResult.previewHtml
+        } : null,
+        order
+      });
     }
 
     res.status(405).json({ success: false, error: "Method not allowed." });
+  });
+
+  // Admin Order Email Preview & Manual Resend Endpoint
+  app.all(["/api/admin/orders/email_preview.php", "/api/admin/orders/email_preview"], (req, res) => {
+    const { id, courier_partner, tracking_awb, estimated_delivery } = req.method === "GET" ? req.query : req.body;
+    const order = ordersDb.find((o) => String(o.id) === String(id));
+    if (!order) {
+      return res.status(404).json({ success: false, error: "Order not found." });
+    }
+
+    const digitsOnly = (order.orderNumber || "").replace(/[^0-9]/g, "");
+    const effectiveCourier = courier_partner || order.courierPartner || "Blue Dart Express";
+    const effectiveAwb = tracking_awb || order.trackingAwb || ("BD-" + (digitsOnly.slice(-6) || "892019"));
+    const effectiveDelivery = estimated_delivery || order.estimatedDelivery || "3 - 5 Business Days";
+    const recipientEmail = order.customer?.email || "customer@example.com";
+
+    const previewHtml = generateShippingEmailHtml({
+      orderNumber: order.orderNumber,
+      customerName: order.customer?.fullName || "Valued Customer",
+      customerEmail: recipientEmail,
+      customerPhone: order.customer?.mobileNumber,
+      shippingAddress: order.customer?.address || "Address on file",
+      city: order.customer?.city || "Jaipur",
+      state: order.customer?.state || "Rajasthan",
+      pinCode: order.customer?.pinCode || "302001",
+      items: (order.items || []).map((it: any) => ({
+        productName: it.productName || it.product_name || "Handcrafted Decor Item",
+        sku: it.sku || "JS-ART",
+        quantity: it.quantity || 1,
+        unitPrice: it.unitPrice || it.unit_price || 0,
+        subtotal: it.subtotal || ((it.unitPrice || 0) * (it.quantity || 1))
+      })),
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod || "Online Payment",
+      courierPartner: effectiveCourier,
+      trackingAwb: effectiveAwb,
+      estimatedDelivery: effectiveDelivery,
+      storeName: settingsDb.store_name,
+      contactEmail: settingsDb.contact_email,
+      whatsappNumber: settingsDb.whatsapp_number
+    });
+
+    res.json({
+      success: true,
+      subject: `Your Order #${order.orderNumber} Has Shipped! 📦 - JSArt&Decor Jaipur`,
+      recipient: recipientEmail,
+      courier: effectiveCourier,
+      tracking_awb: effectiveAwb,
+      preview_html: previewHtml
+    });
   });
 
   // Admin Blogs CRUD

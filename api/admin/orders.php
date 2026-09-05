@@ -116,6 +116,9 @@ if ($method === 'PUT' || $method === 'POST') {
             exit();
         }
 
+        $previous_status = $order['order_status'];
+        $is_moving_processing_to_shipped = ($previous_status === 'Processing' && $new_order_status === 'Shipped');
+
         // If status changing to Cancelled: restore stock ONLY IF stock was previously deducted (stock_deducted = 1) AND not restored yet (stock_restored = 0)
         if ($new_order_status === 'Cancelled' && (int)$order['stock_deducted'] === 1 && (int)$order['stock_restored'] === 0) {
             $itemsStmt = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = :oid");
@@ -142,9 +145,30 @@ if ($method === 'PUT' || $method === 'POST') {
             $updatePay->execute([':pay_status' => $new_payment_status, ':id' => $order_id]);
         }
 
+        $email_triggered = false;
+        if ($is_moving_processing_to_shipped) {
+            $email_triggered = true;
+            // Fetch full order for customer email
+            $custStmt = $pdo->prepare("SELECT customer_name, email, order_number FROM orders WHERE id = :id");
+            $custStmt->execute([':id' => $order_id]);
+            $custData = $custStmt->fetch();
+
+            if (!empty($custData['email'])) {
+                $to = $custData['email'];
+                $subject = "Your Order #" . $custData['order_number'] . " Has Shipped! - JSArt&Decor Jaipur";
+                $headers = "MIME-Version: 1.0\r\nContent-type:text/html;charset=UTF-8\r\nFrom: orders@jsartdecor.com\r\n";
+                $body = "<h2>Great news, " . htmlspecialchars($custData['customer_name']) . "!</h2><p>Your order #" . htmlspecialchars($custData['order_number']) . " has shipped from our Jaipur workshop.</p>";
+                @mail($to, $subject, $body, $headers);
+            }
+        }
+
         $pdo->commit();
 
-        echo json_encode(["success" => true, "message" => "Order updated successfully."]);
+        $msg = $is_moving_processing_to_shipped
+            ? "Order moved from Processing to Shipped. Shipping notification email automatically triggered!"
+            : "Order updated successfully.";
+
+        echo json_encode(["success" => true, "message" => $msg, "email_triggered" => $email_triggered]);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();

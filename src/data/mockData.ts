@@ -636,3 +636,145 @@ export const INITIAL_SECTIONS: any[] = [
     display_order: 1
   }
 ];
+
+export const INITIAL_ORDERS: any[] = [
+  {
+    id: 101,
+    orderNumber: 'JSA-842910',
+    customer: {
+      fullName: 'Nilesh Nigam',
+      mobileNumber: '+91 98765 43210',
+      email: 'nileshnigam551@gmail.com',
+      address: 'Plot 42, Civil Lines, Near Raj Mandir Cinema',
+      city: 'Jaipur',
+      state: 'Rajasthan',
+      pinCode: '302001',
+      orderNotes: 'Please ensure gift packaging for heritage bedsheet.'
+    },
+    items: [
+      {
+        id: 1,
+        productId: 1,
+        productName: 'Handcrafted Heritage Block-Print Cotton Bedsheet',
+        sku: 'JS-HM-HD01',
+        quantity: 1,
+        unitPrice: 2499,
+        itemType: 'Retail',
+        subtotal: 2499
+      },
+      {
+        id: 2,
+        productId: 2,
+        productName: 'Artisanal Macrame Boho Wall Hanging & Tapestry',
+        sku: 'JS-HM-ART01',
+        quantity: 1,
+        unitPrice: 1899,
+        itemType: 'Retail',
+        subtotal: 1899
+      }
+    ],
+    subtotal: 4398,
+    shippingFee: 0,
+    totalAmount: 4398,
+    paymentMethod: 'Razorpay',
+    paymentStatus: 'Paid',
+    razorpayOrderId: 'order_rzp_mock842910',
+    razorpayPaymentId: 'pay_rzp_842910_success',
+    orderStatus: 'Processing',
+    orderType: 'Retail',
+    createdAt: '2026-09-04 14:30:00',
+    emailNotificationSent: false,
+    emailNotifications: []
+  },
+  {
+    id: 102,
+    orderNumber: 'JSA-739120',
+    customer: {
+      fullName: 'Meera Rajput',
+      mobileNumber: '+91 98230 11223',
+      email: 'meera.rajput@example.com',
+      address: 'Flat 304, Emerald Heights, C-Scheme',
+      city: 'Jaipur',
+      state: 'Rajasthan',
+      pinCode: '302005'
+    },
+    items: [
+      {
+        id: 3,
+        productId: 9,
+        productName: 'Luxury Velvet Gold Motif Cushion Covers (Set of 5)',
+        sku: 'JS-HM-HD05',
+        quantity: 2,
+        unitPrice: 1999,
+        itemType: 'Retail',
+        subtotal: 3998
+      }
+    ],
+    subtotal: 3998,
+    shippingFee: 0,
+    totalAmount: 3998,
+    paymentMethod: 'Razorpay',
+    paymentStatus: 'Paid',
+    razorpayOrderId: 'order_rzp_mock739120',
+    razorpayPaymentId: 'pay_rzp_739120_success',
+    orderStatus: 'Confirmed',
+    orderType: 'Retail',
+    createdAt: '2026-09-05 08:15:00',
+    emailNotificationSent: false,
+    emailNotifications: []
+  },
+  {
+    id: 103,
+    orderNumber: 'JSA-612450',
+    customer: {
+      fullName: 'Rohit Deshmukh',
+      mobileNumber: '+91 97110 54321',
+      email: 'rohit.deshmukh@example.com',
+      address: 'Bungalow 7, Bandra West',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      pinCode: '400050'
+    },
+    items: [
+      {
+        id: 4,
+        productId: 10,
+        productName: 'Royal Antique Brass Chandelier & Ambient Pendant Light',
+        sku: 'JS-FC-EL01',
+        quantity: 1,
+        unitPrice: 8999,
+        itemType: 'Retail',
+        subtotal: 8999
+      }
+    ],
+    subtotal: 8999,
+    shippingFee: 0,
+    totalAmount: 8999,
+    paymentMethod: 'Razorpay',
+    paymentStatus: 'Paid',
+    razorpayOrderId: 'order_rzp_mock612450',
+    razorpayPaymentId: 'pay_rzp_612450_success',
+    orderStatus: 'Shipped',
+    orderType: 'Retail',
+    courierPartner: 'Blue Dart Express',
+    trackingAwb: 'BD-84920192',
+    trackingUrl: 'https://www.bluedart.com',
+    estimatedDelivery: 'Sep 08, 2026',
+    shippedAt: '2026-09-04 18:00:00',
+    emailNotificationSent: true,
+    emailNotifications: [
+      {
+        id: 'notif_612450',
+        type: 'shipped',
+        recipient: 'rohit.deshmukh@example.com',
+        subject: 'Your Order #JSA-612450 Has Shipped! - JSArt&Decor',
+        sentAt: '2026-09-04 18:00:00',
+        status: 'sent',
+        courierPartner: 'Blue Dart Express',
+        trackingAwb: 'BD-84920192'
+      }
+    ],
+    createdAt: '2026-09-03 11:00:00'
+  }
+];
+
