@@ -1,13 +1,13 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import crypto from "crypto";
-import { createServer as createViteServer } from "vite";
 import { INITIAL_PRODUCTS, INITIAL_BLOGS, INITIAL_PARTNERS, DEFAULT_SITE_SETTINGS } from "./src/data/mockData";
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = Number(process.env.NODE_ENV === "production" && process.env.PORT ? process.env.PORT : 3000);
 
+async function startServer() {
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -611,22 +611,51 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa"
-    });
-    app.use(vite.middlewares);
+    try {
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa"
+      });
+      app.use(vite.middlewares);
+    } catch (err) {
+      console.warn("Vite middleware could not be loaded, continuing:", err);
+    }
   } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    const possibleDistFiles = [
+      path.join(__dirname, "index.html"),
+      path.join(process.cwd(), "dist", "index.html"),
+      path.join(__dirname, "../dist", "index.html")
+    ];
+    let distDir = path.join(process.cwd(), "dist");
+    for (const testFile of possibleDistFiles) {
+      if (fs.existsSync(testFile)) {
+        distDir = path.dirname(testFile);
+        break;
+      }
+    }
+    app.use(express.static(distDir));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+      res.sendFile(path.join(distDir, "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`JSArt&Decor Server running on http://0.0.0.0:${PORT}`);
   });
+
+  return { app, server };
 }
 
 startServer();
+
+export default app;
+export { app, startServer };
+
+// Compatibility for CommonJS loaders (Hostinger, Passenger, PM2)
+const mod = typeof module !== "undefined" ? (module as any) : null;
+if (mod && mod.exports) {
+  mod.exports = app;
+  mod.exports.default = app;
+  mod.exports.app = app;
+}
