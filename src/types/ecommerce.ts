@@ -147,10 +147,52 @@ export interface ContactMessage {
   name: string;
   email: string;
   mobile: string;
+  enquiry_type?: string;
   subject: string;
   message: string;
   is_read: boolean;
   created_at: string;
+}
+
+export interface Banner {
+  id: number;
+  title: string;
+  subtitle?: string;
+  highlight_text?: string;
+  description?: string;
+  image_url: string;
+  link_url?: string;
+  button_text?: string;
+  banner_type: 'hero' | 'promo' | 'category' | 'curated';
+  display_order: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface PageSection {
+  id: number;
+  page_name: string;
+  section_key: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  content?: string;
+  image_url?: string;
+  button_text?: string;
+  button_url?: string;
+  extra_data?: any;
+  is_active: boolean;
+  display_order: number;
+}
+
+export interface ImageKitUploadResult {
+  fileId?: string;
+  name?: string;
+  url: string;
+  thumbnailUrl?: string;
+  height?: number;
+  width?: number;
+  size?: number;
 }
 
 export interface SiteSettings {
@@ -164,4 +206,7 @@ export interface SiteSettings {
   enable_cod: boolean;
   free_shipping_threshold: number;
   standard_shipping_fee: number;
+  imagekit_public_key?: string;
+  imagekit_url_endpoint?: string;
+  imagekit_private_key?: string;
 }

@@ -5,7 +5,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { INITIAL_PRODUCTS, INITIAL_BLOGS, INITIAL_PARTNERS, DEFAULT_SITE_SETTINGS } from "./src/data/mockData";
+import { INITIAL_PRODUCTS, INITIAL_BLOGS, INITIAL_PARTNERS, DEFAULT_SITE_SETTINGS, INITIAL_BANNERS, INITIAL_SECTIONS } from "./src/data/mockData";
 
 const app = express();
 const PORT = Number(process.env.NODE_ENV === "production" && process.env.PORT ? process.env.PORT : 3000);
@@ -43,6 +43,8 @@ async function startServer() {
   let productsDb = [...INITIAL_PRODUCTS];
   let blogsDb = [...INITIAL_BLOGS];
   let partnersDb = [...INITIAL_PARTNERS];
+  let bannersDb = [...INITIAL_BANNERS];
+  let sectionsDb = [...INITIAL_SECTIONS];
   let ordersDb: any[] = [];
   let contactMessagesDb: any[] = [];
   let settingsDb = { ...DEFAULT_SITE_SETTINGS };
@@ -192,7 +194,9 @@ async function startServer() {
         free_shipping_threshold: Number(settingsDb.free_shipping_threshold || 2499),
         standard_shipping_fee: Number(settingsDb.standard_shipping_fee || 150),
         enable_cod: false,
-        razorpay_key_id: process.env.RAZORPAY_KEY_ID || settingsDb.razorpay_key_id || ""
+        razorpay_key_id: process.env.RAZORPAY_KEY_ID || settingsDb.razorpay_key_id || "",
+        imagekit_public_key: process.env.IMAGEKIT_PUBLIC_KEY || settingsDb.imagekit_public_key || "",
+        imagekit_url_endpoint: process.env.IMAGEKIT_URL_ENDPOINT || settingsDb.imagekit_url_endpoint || ""
       }
     });
   });
@@ -818,6 +822,297 @@ async function startServer() {
     if (req.method === "POST" || req.method === "PUT") {
       settingsDb = { ...settingsDb, ...req.body };
       return res.json({ success: true, message: "Settings updated successfully." });
+    }
+
+    res.status(405).json({ success: false, error: "Method not allowed." });
+  });
+
+  // -------------------------------------------------------------
+  // BANNERS API (HERO, PROMO, CATEGORY, CURATED)
+  // -------------------------------------------------------------
+  app.all(["/api/banners/index.php", "/api/banners"], (req, res) => {
+    const { type, all } = req.query;
+    let list = bannersDb;
+    if (all !== "true") {
+      list = list.filter((b) => b.is_active);
+    }
+    if (type) {
+      list = list.filter((b) => b.banner_type === type);
+    }
+    list.sort((a, b) => (a.display_order || 1) - (b.display_order || 1));
+    res.json({ success: true, data: list });
+  });
+
+  app.post(["/api/banners/save.php", "/api/banners/save"], (req, res) => {
+    const body = req.body;
+    if (!body || !body.title || !body.image_url) {
+      return res.status(400).json({ success: false, message: "Title and image_url are required." });
+    }
+
+    if (body.id) {
+      const idx = bannersDb.findIndex((b) => b.id === body.id);
+      if (idx !== -1) {
+        bannersDb[idx] = { ...bannersDb[idx], ...body };
+        return res.json({ success: true, message: "Banner updated.", id: body.id });
+      }
+    }
+
+    const newId = bannersDb.length > 0 ? Math.max(...bannersDb.map((b) => b.id)) + 1 : 1;
+    const newBanner = {
+      id: newId,
+      title: body.title,
+      subtitle: body.subtitle || "",
+      highlight_text: body.highlight_text || "",
+      description: body.description || "",
+      image_url: body.image_url,
+      link_url: body.link_url || "",
+      button_text: body.button_text || "",
+      banner_type: body.banner_type || "hero",
+      display_order: Number(body.display_order) || 1,
+      is_active: body.is_active !== undefined ? !!body.is_active : true,
+      created_at: new Date().toISOString()
+    };
+    bannersDb.push(newBanner);
+    res.json({ success: true, message: "Banner created.", id: newId });
+  });
+
+  app.all(["/api/banners/delete.php", "/api/banners/delete"], (req, res) => {
+    const id = Number(req.body?.id || req.query?.id);
+    if (!id) return res.status(400).json({ success: false, message: "Valid ID required." });
+    bannersDb = bannersDb.filter((b) => b.id !== id);
+    res.json({ success: true, message: "Banner deleted." });
+  });
+
+  // -------------------------------------------------------------
+  // ALL PAGES & SECTIONS CMS API
+  // -------------------------------------------------------------
+  app.all(["/api/sections/index.php", "/api/sections"], (req, res) => {
+    const { page, all } = req.query;
+    let list = sectionsDb;
+    if (all !== "true") {
+      list = list.filter((s) => s.is_active);
+    }
+    if (page) {
+      list = list.filter((s) => s.page_name === page);
+    }
+    list.sort((a, b) => (a.display_order || 1) - (b.display_order || 1));
+    res.json({ success: true, data: list });
+  });
+
+  app.post(["/api/sections/save.php", "/api/sections/save"], (req, res) => {
+    const body = req.body;
+    if (!body || !body.section_key || !body.title) {
+      return res.status(400).json({ success: false, message: "section_key and title are required." });
+    }
+
+    const idx = sectionsDb.findIndex((s) => s.section_key === body.section_key);
+    if (idx !== -1) {
+      sectionsDb[idx] = { ...sectionsDb[idx], ...body };
+      return res.json({ success: true, message: "Section updated." });
+    } else {
+      const newId = sectionsDb.length > 0 ? Math.max(...sectionsDb.map((s) => s.id)) + 1 : 1;
+      sectionsDb.push({
+        id: newId,
+        page_name: body.page_name || "home",
+        section_key: body.section_key,
+        title: body.title,
+        subtitle: body.subtitle || "",
+        badge: body.badge || "",
+        content: body.content || "",
+        image_url: body.image_url || "",
+        button_text: body.button_text || "",
+        button_url: body.button_url || "",
+        extra_data: body.extra_data || null,
+        is_active: body.is_active !== undefined ? !!body.is_active : true,
+        display_order: Number(body.display_order) || 1
+      });
+      return res.json({ success: true, message: "Section created.", id: newId });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // CONTACT & WHOLESALE INQUIRIES API (ADMIN)
+  // -------------------------------------------------------------
+  app.all(["/api/contact/messages.php", "/api/contact/messages"], (req, res) => {
+    if (req.method === "GET") {
+      return res.json({ success: true, data: contactMessagesDb });
+    }
+
+    if (req.method === "PUT" || req.method === "POST") {
+      const { id, is_read } = req.body;
+      const msg = contactMessagesDb.find((m) => m.id === Number(id));
+      if (!msg) return res.status(404).json({ success: false, error: "Message not found." });
+      msg.is_read = !!is_read;
+      return res.json({ success: true, message: "Status updated." });
+    }
+
+    if (req.method === "DELETE") {
+      const id = Number(req.body?.id || req.query?.id);
+      contactMessagesDb = contactMessagesDb.filter((m) => m.id !== id);
+      return res.json({ success: true, message: "Message deleted." });
+    }
+
+    res.status(405).json({ success: false, error: "Method not allowed." });
+  });
+
+  // -------------------------------------------------------------
+  // IMAGEKIT UPLOAD & TESTING ENDPOINTS
+  // -------------------------------------------------------------
+  app.all(["/api/upload/imagekit.php", "/api/upload/imagekit"], async (req, res) => {
+    const action = req.query.action || req.body?.action;
+
+    // Test ImageKit Credentials
+    if (action === "test") {
+      const privateKey = settingsDb.imagekit_private_key || process.env.IMAGEKIT_PRIVATE_KEY;
+      if (!privateKey) {
+        return res.json({
+          success: false,
+          message: "ImageKit Private Key is not configured yet. Please enter it in Admin Settings."
+        });
+      }
+
+      try {
+        const authHeader = "Basic " + Buffer.from(privateKey + ":").toString("base64");
+        const ikRes = await fetch("https://api.imagekit.io/v1/files?limit=1", {
+          headers: { Authorization: authHeader }
+        });
+
+        if (ikRes.ok) {
+          return res.json({
+            success: true,
+            message: "ImageKit connected successfully! Live CDN active.",
+            endpoint: settingsDb.imagekit_url_endpoint || process.env.IMAGEKIT_URL_ENDPOINT
+          });
+        } else {
+          return res.json({
+            success: false,
+            message: `ImageKit authentication failed (HTTP ${ikRes.status}). Verify your Private Key.`
+          });
+        }
+      } catch (err: any) {
+        return res.json({
+          success: false,
+          message: "ImageKit connection test failed: " + (err?.message || err)
+        });
+      }
+    }
+
+    // Get Auth Parameters (token, expire, signature) for client-side direct upload
+    if (action === "auth") {
+      const privateKey = settingsDb.imagekit_private_key || process.env.IMAGEKIT_PRIVATE_KEY;
+      const publicKey = settingsDb.imagekit_public_key || process.env.IMAGEKIT_PUBLIC_KEY || "";
+      const urlEndpoint = settingsDb.imagekit_url_endpoint || process.env.IMAGEKIT_URL_ENDPOINT || "";
+
+      if (!privateKey) {
+        return res.status(400).json({ success: false, message: "ImageKit Private Key not configured." });
+      }
+
+      const token = crypto.randomBytes(16).toString("hex");
+      const expire = Math.floor(Date.now() / 1000) + 1800;
+      const signature = crypto.createHmac("sha1", privateKey).update(token + expire).digest("hex");
+
+      return res.json({
+        token,
+        expire,
+        signature,
+        publicKey,
+        urlEndpoint
+      });
+    }
+
+    // Upload File (base64 or remote URL or multipart)
+    if (req.method === "POST") {
+      const { file, fileName, folder } = req.body || {};
+      const privateKey = settingsDb.imagekit_private_key || process.env.IMAGEKIT_PRIVATE_KEY;
+
+      if (!file) {
+        return res.status(400).json({ success: false, message: "No file content or image URL provided." });
+      }
+
+      // If ImageKit private key is set, call ImageKit upload API
+      if (privateKey) {
+        try {
+          const authHeader = "Basic " + Buffer.from(privateKey + ":").toString("base64");
+          const formBody = new URLSearchParams();
+          formBody.append("file", file);
+          formBody.append("fileName", fileName || `img_${Date.now()}.jpg`);
+          formBody.append("useUniqueFileName", "true");
+          if (folder) formBody.append("folder", folder);
+
+          const ikRes = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+            method: "POST",
+            headers: {
+              Authorization: authHeader
+            },
+            body: formBody
+          });
+
+          const ikData = (await ikRes.json()) as any;
+
+          if (ikRes.ok && ikData.url) {
+            return res.json({
+              success: true,
+              url: ikData.url,
+              image_url: ikData.url,
+              thumbnailUrl: ikData.thumbnailUrl || ikData.url,
+              fileId: ikData.fileId,
+              name: ikData.name,
+              provider: "imagekit"
+            });
+          } else {
+            return res.status(ikRes.status || 500).json({
+              success: false,
+              message: ikData.message || "ImageKit upload failed.",
+              details: ikData
+            });
+          }
+        } catch (err: any) {
+          console.error("ImageKit upload error:", err);
+          return res.status(500).json({
+            success: false,
+            message: "ImageKit upload failed: " + (err?.message || err)
+          });
+        }
+      }
+
+      // Fallback: If no ImageKit private key, return the URL (if valid URL) or save to /uploads
+      if (typeof file === "string" && (file.startsWith("http://") || file.startsWith("https://"))) {
+        return res.json({
+          success: true,
+          url: file,
+          image_url: file,
+          provider: "direct_url",
+          note: "Using direct image URL. Configure ImageKit in Admin Settings for CDN optimization."
+        });
+      }
+
+      // If base64 data URI
+      if (typeof file === "string" && file.startsWith("data:image/")) {
+        const matches = file.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+        if (matches) {
+          const ext = matches[1] || "jpg";
+          const base64Data = matches[2];
+          const buffer = Buffer.from(base64Data, "base64");
+          const uploadsDir = path.join(process.cwd(), "uploads");
+          if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+          const safeFileName = `${Date.now()}_${(fileName || "upload").replace(/[^a-zA-Z0-9_-]/g, "")}.${ext}`;
+          const filePath = path.join(uploadsDir, safeFileName);
+          fs.writeFileSync(filePath, buffer);
+          const localUrl = `/uploads/${safeFileName}`;
+          return res.json({
+            success: true,
+            url: localUrl,
+            image_url: localUrl,
+            provider: "local_storage",
+            note: "Stored locally. Configure ImageKit in Admin Settings for CDN delivery."
+          });
+        }
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: "Invalid file format. Please upload via ImageKit or provide an image URL."
+      });
     }
 
     res.status(405).json({ success: false, error: "Method not allowed." });

@@ -20,8 +20,11 @@ import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminBlogs } from './pages/admin/AdminBlogs';
 import { AdminPartners } from './pages/admin/AdminPartners';
 import { AdminSettings } from './pages/admin/AdminSettings';
+import { AdminBanners } from './pages/admin/AdminBanners';
+import { AdminSections } from './pages/admin/AdminSections';
+import { AdminMessages } from './pages/admin/AdminMessages';
 import { Product, CartItem, Order, Blog, Partner, SiteSettings } from './types/ecommerce';
-import { LayoutDashboard, Package, ShoppingBag, BookOpen, Users, Settings, LogOut, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, BookOpen, Users, Settings, LogOut, AlertTriangle, RefreshCw, Loader2, Layers, LayoutGrid, MessageSquare } from 'lucide-react';
 
 export default function App() {
   const [activeView, setActiveView] = useState<string>('home');
@@ -445,6 +448,36 @@ export default function App() {
                     </button>
 
                     <button
+                      onClick={() => setAdminTab('banners')}
+                      className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${
+                        adminTab === 'banners' ? 'bg-amber-500 text-neutral-950 font-bold' : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+                      }`}
+                    >
+                      <Layers className="w-4 h-4" />
+                      <span>Banners</span>
+                    </button>
+
+                    <button
+                      onClick={() => setAdminTab('sections')}
+                      className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${
+                        adminTab === 'sections' ? 'bg-amber-500 text-neutral-950 font-bold' : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+                      }`}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      <span>Pages CMS</span>
+                    </button>
+
+                    <button
+                      onClick={() => setAdminTab('messages')}
+                      className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${
+                        adminTab === 'messages' ? 'bg-amber-500 text-neutral-950 font-bold' : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+                      }`}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Enquiries</span>
+                    </button>
+
+                    <button
                       onClick={() => setAdminTab('blogs')}
                       className={`px-3 py-2 rounded-lg flex items-center gap-1.5 transition ${
                         adminTab === 'blogs' ? 'bg-amber-500 text-neutral-950 font-bold' : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
@@ -471,7 +504,7 @@ export default function App() {
                       }`}
                     >
                       <Settings className="w-4 h-4" />
-                      <span>Settings</span>
+                      <span>Settings & Database</span>
                     </button>
                   </div>
 
@@ -508,6 +541,18 @@ export default function App() {
                     orders={orders}
                     onRefreshOrders={handleRefreshOrders}
                   />
+                )}
+
+                {adminTab === 'banners' && (
+                  <AdminBanners />
+                )}
+
+                {adminTab === 'sections' && (
+                  <AdminSections />
+                )}
+
+                {adminTab === 'messages' && (
+                  <AdminMessages />
                 )}
 
                 {adminTab === 'blogs' && (

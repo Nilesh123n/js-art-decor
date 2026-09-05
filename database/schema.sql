@@ -127,6 +127,42 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `banners` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `subtitle` VARCHAR(255) NULL,
+  `highlight_text` VARCHAR(255) NULL,
+  `description` TEXT NULL,
+  `image_url` VARCHAR(500) NOT NULL,
+  `link_url` VARCHAR(255) NULL,
+  `button_text` VARCHAR(100) NULL,
+  `banner_type` ENUM('hero', 'promo', 'category', 'curated') NOT NULL DEFAULT 'hero',
+  `display_order` INT NOT NULL DEFAULT 1,
+  `is_active` TINYINT(1) DEFAULT 1,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_banner_type` (`banner_type`),
+  INDEX `idx_is_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `page_sections` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `page_name` VARCHAR(50) NOT NULL,
+  `section_key` VARCHAR(50) NOT NULL UNIQUE,
+  `title` VARCHAR(255) NOT NULL,
+  `subtitle` VARCHAR(255) NULL,
+  `badge` VARCHAR(100) NULL,
+  `content` TEXT NULL,
+  `image_url` VARCHAR(500) NULL,
+  `button_text` VARCHAR(100) NULL,
+  `button_url` VARCHAR(255) NULL,
+  `extra_data` JSON NULL,
+  `is_active` TINYINT(1) DEFAULT 1,
+  `display_order` INT NOT NULL DEFAULT 1,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_page_name` (`page_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `settings` (
   `setting_key` VARCHAR(100) PRIMARY KEY,
   `setting_value` TEXT NOT NULL
@@ -141,6 +177,9 @@ INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('address', ''),
 ('free_shipping_threshold', '2499'),
 ('standard_shipping_fee', '150'),
-('enable_cod', '1'),
-('razorpay_key_id', '')
+('enable_cod', '0'),
+('razorpay_key_id', ''),
+('imagekit_public_key', ''),
+('imagekit_url_endpoint', ''),
+('imagekit_private_key', '')
 ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);

@@ -20,9 +20,11 @@ try {
         "address" => $raw['address'] ?? "",
         "free_shipping_threshold" => (float)($raw['free_shipping_threshold'] ?? 2499),
         "standard_shipping_fee" => (float)($raw['standard_shipping_fee'] ?? 150),
-        "enable_cod" => isset($raw['enable_cod']) ? ($raw['enable_cod'] == '1' || $raw['enable_cod'] === 'true') : true,
+        "enable_cod" => false,
         "currency_symbol" => "₹",
-        "razorpay_key_id" => !empty($raw['razorpay_key_id']) ? $raw['razorpay_key_id'] : RAZORPAY_KEY_ID
+        "razorpay_key_id" => !empty($raw['razorpay_key_id']) ? $raw['razorpay_key_id'] : RAZORPAY_KEY_ID,
+        "imagekit_public_key" => $raw['imagekit_public_key'] ?? "",
+        "imagekit_url_endpoint" => $raw['imagekit_url_endpoint'] ?? ""
     ];
 
     echo json_encode(["success" => true, "data" => $public_settings]);

@@ -1,4 +1,4 @@
-import { Product, Order, Blog, Partner, ContactMessage, SiteSettings, OrderTrackingData } from '../types/ecommerce';
+import { Product, Order, Blog, Partner, ContactMessage, SiteSettings, OrderTrackingData, Banner, PageSection, ImageKitUploadResult } from '../types/ecommerce';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
 
@@ -442,6 +442,155 @@ export const ApiService = {
         ...getCsrfHeader()
       },
       body: JSON.stringify(settings)
+    });
+    await handleResponse<any>(res);
+  },
+
+  // -------------------------------------------------------------
+  // BANNERS API (HERO, PROMO, CATEGORY, CURATED)
+  // -------------------------------------------------------------
+  async getBanners(all: boolean = false, type?: string): Promise<Banner[]> {
+    const params = new URLSearchParams();
+    if (all) params.append('all', 'true');
+    if (type) params.append('type', type);
+    const url = `${API_BASE_URL}/banners/index.php?${params.toString()}`;
+    const res = await fetch(url);
+    const json = await handleResponse<ApiResponse<Banner[]>>(res);
+    return json.data || [];
+  },
+
+  async saveBanner(banner: Partial<Banner>): Promise<{ id: number }> {
+    const url = `${API_BASE_URL}/banners/save.php`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCsrfHeader()
+      },
+      body: JSON.stringify(banner)
+    });
+    const json = await handleResponse<any>(res);
+    return { id: json.id };
+  },
+
+  async deleteBanner(id: number): Promise<void> {
+    const url = `${API_BASE_URL}/banners/delete.php`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCsrfHeader()
+      },
+      body: JSON.stringify({ id })
+    });
+    await handleResponse<any>(res);
+  },
+
+  // -------------------------------------------------------------
+  // ALL PAGES & SECTIONS CMS API
+  // -------------------------------------------------------------
+  async getSections(page?: string, all: boolean = false): Promise<PageSection[]> {
+    const params = new URLSearchParams();
+    if (all) params.append('all', 'true');
+    if (page) params.append('page', page);
+    const url = `${API_BASE_URL}/sections/index.php?${params.toString()}`;
+    const res = await fetch(url);
+    const json = await handleResponse<ApiResponse<PageSection[]>>(res);
+    return json.data || [];
+  },
+
+  async saveSection(section: Partial<PageSection>): Promise<void> {
+    const url = `${API_BASE_URL}/sections/save.php`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCsrfHeader()
+      },
+      body: JSON.stringify(section)
+    });
+    await handleResponse<any>(res);
+  },
+
+  // -------------------------------------------------------------
+  // IMAGEKIT CDN & DIRECT UPLOAD API
+  // -------------------------------------------------------------
+  async uploadToImageKit(
+    fileOrUrl: File | string,
+    fileName?: string,
+    folder: string = '/jsartdecor'
+  ): Promise<ImageKitUploadResult> {
+    const url = `${API_BASE_URL}/upload/imagekit.php`;
+
+    // If it's a browser File object, convert to base64 or send as FormData
+    if (fileOrUrl instanceof File) {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(fileOrUrl);
+      });
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCsrfHeader()
+        },
+        body: JSON.stringify({
+          file: base64,
+          fileName: fileName || fileOrUrl.name,
+          folder
+        })
+      });
+
+      const json = await handleResponse<any>(res);
+      return {
+        url: json.url || json.image_url,
+        thumbnailUrl: json.thumbnailUrl || json.url,
+        fileId: json.fileId,
+        name: json.name || fileName
+      };
+    } else {
+      // Remote URL or Base64 string
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCsrfHeader()
+        },
+        body: JSON.stringify({
+          file: fileOrUrl,
+          fileName: fileName || 'image_' + Date.now() + '.jpg',
+          folder
+        })
+      });
+
+      const json = await handleResponse<any>(res);
+      return {
+        url: json.url || json.image_url,
+        thumbnailUrl: json.thumbnailUrl || json.url,
+        fileId: json.fileId,
+        name: json.name
+      };
+    }
+  },
+
+  async testImageKitConnection(): Promise<{ success: boolean; message: string; endpoint?: string }> {
+    const url = `${API_BASE_URL}/upload/imagekit.php?action=test`;
+    const res = await fetch(url, { headers: getCsrfHeader() });
+    return await handleResponse<any>(res);
+  },
+
+  async deleteEnquiry(id: number): Promise<void> {
+    const url = `${API_BASE_URL}/contact/messages.php`;
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCsrfHeader()
+      },
+      body: JSON.stringify({ id })
     });
     await handleResponse<any>(res);
   }

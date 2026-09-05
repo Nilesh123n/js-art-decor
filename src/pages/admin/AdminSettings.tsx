@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, CheckCircle2, Key, Image, Loader2, AlertCircle } from 'lucide-react';
+import { Save, CheckCircle2, Key, Image, Loader2, AlertCircle, Sparkles, Database } from 'lucide-react';
 import { SiteSettings } from '../../types/ecommerce';
 import { ApiService } from '../../services/api';
 
@@ -13,6 +13,29 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [testingImageKit, setTestingImageKit] = useState(false);
+  const [imageKitTestResult, setImageKitTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleTestImageKit = async () => {
+    setTestingImageKit(true);
+    setImageKitTestResult(null);
+    try {
+      // First save current key if edited
+      if (form.imagekit_private_key || form.imagekit_url_endpoint) {
+        await ApiService.saveAdminSettings(form);
+      }
+      const res = await ApiService.testImageKitConnection();
+      setImageKitTestResult(res);
+    } catch (err: any) {
+      setImageKitTestResult({
+        success: false,
+        message: err.message || 'ImageKit connection test failed.'
+      });
+    } finally {
+      setTestingImageKit(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +156,101 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
           </div>
         </div>
 
+        {/* ImageKit CDN & Hostinger MySQL Media Storage */}
+        <div className="border-t pt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span>ImageKit CDN Media Integration (Hostinger MySQL Connected)</span>
+            </h2>
+            <button
+              type="button"
+              onClick={handleTestImageKit}
+              disabled={testingImageKit}
+              className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-lg text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+            >
+              {testingImageKit ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              <span>Test ImageKit Connection</span>
+            </button>
+          </div>
+
+          <p className="text-[11px] text-neutral-500">
+            ImageKit provides real-time image resizing, automatic WebP/AVIF compression, and global CDN delivery. Image metadata and configurations are stored in your Hostinger MySQL database.
+          </p>
+
+          {imageKitTestResult && (
+            <div
+              className={`p-3 rounded-xl border flex items-center gap-2 text-xs font-medium ${
+                imageKitTestResult.success
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : 'bg-red-50 text-red-800 border-red-200'
+              }`}
+            >
+              {imageKitTestResult.success ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              )}
+              <span>{imageKitTestResult.message}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-bold text-neutral-700 mb-1">
+                ImageKit URL-Endpoint *
+              </label>
+              <input
+                type="text"
+                placeholder="https://ik.imagekit.io/your_account_id"
+                value={form.imagekit_url_endpoint || ''}
+                onChange={(e) => setForm({ ...form, imagekit_url_endpoint: e.target.value })}
+                className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 font-mono text-neutral-900"
+              />
+              <span className="text-[10px] text-neutral-400">Found in ImageKit Dashboard &gt; Developer Options</span>
+            </div>
+
+            <div>
+              <label className="block font-bold text-neutral-700 mb-1">
+                ImageKit Public Key *
+              </label>
+              <input
+                type="text"
+                placeholder="public_xxxxxxxxxxxx"
+                value={form.imagekit_public_key || ''}
+                onChange={(e) => setForm({ ...form, imagekit_public_key: e.target.value })}
+                className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 font-mono text-neutral-900"
+              />
+              <span className="text-[10px] text-neutral-400">Used for client-side uploads</span>
+            </div>
+
+            <div className="sm:col-span-2">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-bold text-neutral-700">
+                  ImageKit Private API Key
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPrivateKey(!showPrivateKey)}
+                  className="text-[11px] text-neutral-500 hover:text-neutral-800 font-medium"
+                >
+                  {showPrivateKey ? 'Hide Key' : 'Reveal Key'}
+                </button>
+              </div>
+              <input
+                type={showPrivateKey ? 'text' : 'password'}
+                placeholder="private_xxxxxxxxxxxx"
+                value={form.imagekit_private_key || ''}
+                onChange={(e) => setForm({ ...form, imagekit_private_key: e.target.value })}
+                className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 font-mono text-neutral-900"
+              />
+              <span className="text-[10px] text-neutral-400">
+                Encrypted in Hostinger MySQL settings. Required for secure server-side image synchronization.
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Razorpay Key Settings */}
         <div className="border-t pt-4 space-y-3">
           <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
@@ -154,7 +272,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
           </div>
         </div>
 
-        {/* Shipping & COD Parameters */}
+        {/* Shipping Parameters */}
         <div className="border-t pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block font-bold text-neutral-700 mb-1">Free Shipping Threshold (₹)</label>
@@ -178,16 +296,36 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ settings, onRefres
             />
           </div>
 
-          <div className="sm:col-span-2 pt-2">
-            <label className="flex items-center gap-2 cursor-pointer font-bold text-neutral-800">
-              <input
-                type="checkbox"
-                checked={form.enable_cod}
-                onChange={(e) => setForm({ ...form, enable_cod: e.target.checked })}
-                className="accent-neutral-900"
-              />
-              <span>Enable Cash on Delivery (COD) Checkout Option</span>
-            </label>
+          <div className="sm:col-span-2 pt-2 bg-neutral-50 p-3 rounded-xl border border-neutral-200">
+            <div className="flex items-center gap-2 text-neutral-500 text-xs">
+              <span className="font-bold text-neutral-700">Payment Methods:</span>
+              <span>Instant Online Payment (Razorpay UPI, Credit/Debit Card, Netbanking) is enabled. COD is disabled per store policy.</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Hostinger MySQL Database Schema Status */}
+        <div className="border-t pt-4 space-y-3">
+          <h2 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+            <Database className="w-4 h-4 text-emerald-600" />
+            <span>Hostinger MySQL Database Tables</span>
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-mono">
+            {[
+              { name: 'banners', desc: 'Hero & Promo sliders' },
+              { name: 'page_sections', desc: 'CMS page copy' },
+              { name: 'products', desc: 'Retail & wholesale' },
+              { name: 'orders', desc: 'Tracking & orders' },
+              { name: 'settings', desc: 'ImageKit & config' },
+              { name: 'contact_messages', desc: 'Enquiries & leads' },
+              { name: 'blogs', desc: 'Articles & stories' },
+              { name: 'partners', desc: 'B2B & clients' }
+            ].map((tbl) => (
+              <div key={tbl.name} className="p-2 bg-neutral-50 rounded-lg border border-neutral-200">
+                <span className="font-bold text-emerald-700 block">✓ {tbl.name}</span>
+                <span className="text-neutral-500 text-[10px]">{tbl.desc}</span>
+              </div>
+            ))}
           </div>
         </div>
 

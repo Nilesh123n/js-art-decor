@@ -1,8 +1,9 @@
-import React from 'react';
-import { ArrowRight, Sparkles, ChevronLeft, ChevronRight, Award, Shield, Truck, RotateCcw, Headphones, Crown, Medal, Star, Gem } from 'lucide-react';
-import { Product, Blog, Partner, SiteSettings } from '../types/ecommerce';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight, Award, Shield, Truck, RotateCcw, Headphones, Crown, Medal, Star, Gem, Layers } from 'lucide-react';
+import { Product, Blog, Partner, SiteSettings, Banner, PageSection } from '../types/ecommerce';
 import { ProductCarousel } from '../components/common/ProductCarousel';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
+import { ApiService } from '../services/api';
 
 import heroGold1 from '../assets/images/hero_gold_decor_1_1786612841855.jpg';
 import heroGold2 from '../assets/images/hero_gold_decor_2_1786612862864.jpg';
@@ -31,16 +32,35 @@ export const HomePage: React.FC<HomePageProps> = ({
   onAddToCart,
   onNavigate
 }) => {
-  const [heroSlide, setHeroSlide] = React.useState(0);
+  const [heroSlide, setHeroSlide] = useState(0);
+  const [dbBanners, setDbBanners] = useState<Banner[]>([]);
+  const [dbSections, setDbSections] = useState<PageSection[]>([]);
 
-  const heroSlides = [
+  useEffect(() => {
+    // Load dynamic banners and sections from MySQL
+    ApiService.getBanners().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setDbBanners(data);
+      }
+    }).catch(console.error);
+
+    ApiService.getSections('home').then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setDbSections(data);
+      }
+    }).catch(console.error);
+  }, []);
+
+  const defaultHeroSlides = [
     {
       subtitle: 'PREMIUM QUALITY • TIMELESS ELEGANCE',
       titleLine1: 'Crafted Luxury',
       titleLine2: 'Textiles &',
       titleHighlight: 'Artisan Decor',
       description: 'Manufacturer, Wholesaler & Retailer of premium home textiles & handcrafted decor items.',
-      bgImage: heroGold1
+      bgImage: heroGold1,
+      linkUrl: 'catalog',
+      buttonText: 'SHOP WHOLESALE'
     },
     {
       subtitle: 'EXCLUSIVE WHOLESALE & RETAIL COLLECTION',
@@ -48,7 +68,9 @@ export const HomePage: React.FC<HomePageProps> = ({
       titleLine2: 'Hotel Quality',
       titleHighlight: 'Bedding Sets',
       description: 'Elevate your spaces with 100% fine cotton, handblock prints and designer quilts.',
-      bgImage: heroGold2
+      bgImage: heroGold2,
+      linkUrl: 'catalog',
+      buttonText: 'SHOP WHOLESALE'
     },
     {
       subtitle: 'HANDMADE BY SKILLED ARTISANS',
@@ -56,9 +78,26 @@ export const HomePage: React.FC<HomePageProps> = ({
       titleLine2: 'Block Prints &',
       titleHighlight: 'Custom Decor',
       description: 'Direct factory pricing for bulk orders, hospitality partners and event decorators.',
-      bgImage: heroGold3
+      bgImage: heroGold3,
+      linkUrl: 'wholesale-tree',
+      buttonText: 'EXPLORE WHOLESALE'
     }
   ];
+
+  const activeHeroBanners = dbBanners.filter((b) => b.banner_type === 'hero' && b.is_active);
+
+  const heroSlides = activeHeroBanners.length > 0
+    ? activeHeroBanners.map((b) => ({
+        subtitle: b.subtitle || 'PREMIUM QUALITY • TIMELESS ELEGANCE',
+        titleLine1: b.title,
+        titleLine2: '',
+        titleHighlight: b.highlight_text || '',
+        description: b.description || 'Manufacturer, Wholesaler & Retailer of premium home textiles & handcrafted decor.',
+        bgImage: b.image_url,
+        linkUrl: b.link_url || 'catalog',
+        buttonText: b.button_text || 'SHOP NOW'
+      }))
+    : defaultHeroSlides;
 
   React.useEffect(() => {
     const timer = setInterval(() => {

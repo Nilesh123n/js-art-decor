@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, X, Search, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { Product, ProductionType, Segment, ProductType, SalesAvailability } from '../../types/ecommerce';
 import { ApiService } from '../../services/api';
+import { ImageKitUploader } from '../../components/admin/ImageKitUploader';
 
 interface AdminProductsProps {
   products: Product[];
@@ -367,20 +368,18 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block font-bold text-neutral-700 mb-1">Main Image URL / Upload</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={editingProduct.images?.[0] || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, images: [e.target.value] })}
-                      className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-mono"
-                    />
-                    <label className="bg-neutral-800 text-white font-bold px-3 py-2 rounded-lg cursor-pointer flex items-center gap-1.5 shrink-0 hover:bg-black">
-                      {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      <span>Upload</span>
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  </div>
+                  <ImageKitUploader
+                    value={editingProduct.images?.[0] || ''}
+                    onChange={(url) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        images: [url, ...(editingProduct.images || []).slice(1)]
+                      })
+                    }
+                    label="Main Product Image (ImageKit CDN) *"
+                    folder="/jsartdecor/products"
+                    hint="Uploaded directly to ImageKit CDN and saved to Hostinger MySQL products table."
+                  />
                 </div>
 
                 <div className="sm:col-span-2">

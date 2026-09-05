@@ -504,5 +504,135 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   razorpay_key_id: '',
   enable_cod: false,
   free_shipping_threshold: 2499,
-  standard_shipping_fee: 150
+  standard_shipping_fee: 150,
+  imagekit_public_key: '',
+  imagekit_url_endpoint: '',
+  imagekit_private_key: ''
 };
+
+export const INITIAL_BANNERS: any[] = [
+  {
+    id: 1,
+    title: 'Crafted Luxury Textiles & Artisan Decor',
+    subtitle: 'PREMIUM QUALITY • TIMELESS ELEGANCE',
+    highlight_text: 'Artisan Decor',
+    description: 'Manufacturer, Wholesaler & Retailer of premium home textiles & handcrafted decor items direct from Jaipur.',
+    image_url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1600&q=80',
+    link_url: 'catalog',
+    button_text: 'EXPLORE COLLECTION',
+    banner_type: 'hero',
+    display_order: 1,
+    is_active: true
+  },
+  {
+    id: 2,
+    title: 'Royal Linens & Hotel Quality Bedding Sets',
+    subtitle: 'EXCLUSIVE WHOLESALE & RETAIL COLLECTION',
+    highlight_text: 'Bedding Sets',
+    description: 'Elevate your spaces with 100% fine cotton, handblock prints and designer quilts with factory direct pricing.',
+    image_url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1600&q=80',
+    link_url: 'catalog',
+    button_text: 'SHOP BEDDING',
+    banner_type: 'hero',
+    display_order: 2,
+    is_active: true
+  },
+  {
+    id: 3,
+    title: 'Heritage Indian Block Prints & Custom Decor',
+    subtitle: 'HANDMADE BY SKILLED ARTISANS',
+    highlight_text: 'Custom Decor',
+    description: 'Direct factory pricing for bulk orders, hospitality partners and commercial interior decorators.',
+    image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
+    link_url: 'wholesale-tree',
+    button_text: 'WHOLESALE ENQUIRY',
+    banner_type: 'hero',
+    display_order: 3,
+    is_active: true
+  },
+  {
+    id: 4,
+    title: 'Festive Bulk Orders - 40% Off Wholesale MOQ',
+    subtitle: 'LIMITED TIME B2B DISPATCH',
+    highlight_text: '40% Off Wholesale',
+    description: 'Special seasonal allocation for retail chains, hotel suppliers, and boutique gift distributors.',
+    image_url: 'https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?auto=format&fit=crop&w=1200&q=80',
+    link_url: 'wholesale-tree',
+    button_text: 'CLAIM WHOLESALE PRICING',
+    banner_type: 'promo',
+    display_order: 1,
+    is_active: true
+  },
+  {
+    id: 5,
+    title: 'Jaipur Handblock Masterpiece Series',
+    subtitle: 'CURATED HERITAGE ARTISTRY',
+    highlight_text: 'Blockprint Specials',
+    description: 'Authentic Bagru & Sanganeri natural dyed fabrics crafted on heritage teak wood hand-press blocks.',
+    image_url: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80',
+    link_url: 'catalog',
+    button_text: 'VIEW CURATED SERIES',
+    banner_type: 'curated',
+    display_order: 1,
+    is_active: true
+  }
+];
+
+export const INITIAL_SECTIONS: any[] = [
+  {
+    id: 1,
+    page_name: 'home',
+    section_key: 'home_hero',
+    title: 'Crafted Luxury Textiles & Artisan Decor',
+    subtitle: 'Handmade Jaipur Heritage & Factory Manufacturing',
+    badge: 'JAIPUR HERITAGE CRAFT',
+    content: 'Specializing in 100% fine cotton bedsheets, handblock prints, artisan decor, and electric lighting accents.',
+    image_url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80',
+    button_text: 'Explore Catalog',
+    button_url: 'catalog',
+    is_active: true,
+    display_order: 1
+  },
+  {
+    id: 2,
+    page_name: 'home',
+    section_key: 'home_story',
+    title: 'Generations of Handblock & Loom Mastery',
+    subtitle: 'From Jaipur workshops directly to premium bedrooms and hotels',
+    badge: 'OUR ARTISAN LEGACY',
+    content: 'Founded on the rich textile traditions of Rajasthan, JSArt&Decor connects master artisans with contemporary interior aesthetics. We control every stage of production—from organic yarn spinning and wooden block carving to natural eco-dyeing and precision finishing.',
+    image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+    button_text: 'Our Manufacturing Journey',
+    button_url: 'wholesale-tree',
+    is_active: true,
+    display_order: 2
+  },
+  {
+    id: 3,
+    page_name: 'wholesale-tree',
+    section_key: 'wholesale_intro',
+    title: 'B2B Wholesale & Factory Manufacturing',
+    subtitle: 'Direct Jaipur Workshop Supply Chain for Retailers & Hoteliers',
+    badge: 'TIERED WHOLESALE PRICING',
+    content: 'Benefit from tiered wholesale pricing with low minimum order quantities (MOQ starting at 10 pieces). Custom branding, barcoding, and export packaging available.',
+    image_url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80',
+    button_text: 'Download Catalog',
+    button_url: 'contact',
+    is_active: true,
+    display_order: 1
+  },
+  {
+    id: 4,
+    page_name: 'contact',
+    section_key: 'contact_header',
+    title: 'Reach Out To Our Jaipur Workshop',
+    subtitle: 'Direct support for wholesale enquiries, bulk export orders, and custom client requests',
+    badge: 'WE ARE HERE TO HELP',
+    content: 'Our team is available Monday to Saturday (9:00 AM - 7:00 PM IST) for wholesale quotes, sample swatch books, and customer support.',
+    image_url: 'https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?auto=format&fit=crop&w=1200&q=80',
+    button_text: 'WhatsApp Us',
+    button_url: 'whatsapp',
+    is_active: true,
+    display_order: 1
+  }
+];

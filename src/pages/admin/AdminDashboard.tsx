@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, ShoppingBag, DollarSign, AlertTriangle, TrendingUp, CheckCircle, Clock } from 'lucide-react';
+import { Package, ShoppingBag, DollarSign, AlertTriangle, TrendingUp, CheckCircle, Clock, Layers, LayoutGrid, MessageSquare, Settings, Sparkles } from 'lucide-react';
 import { Product, Order } from '../../types/ecommerce';
 
 interface AdminDashboardProps {
@@ -16,7 +16,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const activeProducts = products.filter(p => p.is_active).length;
   const lowStockProducts = products.filter(p => p.stock_quantity <= 10);
   const paidOrders = orders.filter(o => o.paymentStatus === 'Paid');
-  const codOrders = orders.filter(o => o.paymentMethod === 'COD');
   const newOrders = orders.filter(o => o.orderStatus === 'New');
 
   const totalRevenue = orders
@@ -26,9 +25,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="space-y-8">
       {/* Title */}
-      <div>
-        <h1 className="text-2xl font-serif font-bold text-neutral-900">Admin Metrics Overview</h1>
-        <p className="text-xs text-neutral-500">Real-time statistics for JSArt&Decor inventory and sales.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-serif font-bold text-neutral-900">Admin Metrics & CMS Overview</h1>
+          <p className="text-xs text-neutral-500">Connected to Hostinger MySQL & ImageKit CDN media storage.</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => onNavigateTab('banners')}
+            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-700" />
+            <span>Manage Banners</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateTab('sections')}
+            className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Page Sections CMS</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Access CMS Hub */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div
+          onClick={() => onNavigateTab('banners')}
+          className="bg-white p-4 rounded-xl border border-neutral-200 hover:border-amber-600 transition cursor-pointer shadow-sm group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="p-2 bg-amber-100 text-amber-800 rounded-lg group-hover:scale-105 transition">
+              <Layers className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded">
+              ImageKit CDN
+            </span>
+          </div>
+          <h3 className="font-serif font-bold text-sm text-neutral-900">Hero & Promo Banners</h3>
+          <p className="text-xs text-neutral-500 mt-1">Control carousel slides, promotional tags, and wholesale deal banners.</p>
+        </div>
+
+        <div
+          onClick={() => onNavigateTab('sections')}
+          className="bg-white p-4 rounded-xl border border-neutral-200 hover:border-amber-600 transition cursor-pointer shadow-sm group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="p-2 bg-neutral-100 text-neutral-800 rounded-lg group-hover:scale-105 transition">
+              <LayoutGrid className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded">
+              All Pages CMS
+            </span>
+          </div>
+          <h3 className="font-serif font-bold text-sm text-neutral-900">Pages & Section Content</h3>
+          <p className="text-xs text-neutral-500 mt-1">Edit stories, headlines, and call-to-actions across home, catalog, and wholesale.</p>
+        </div>
+
+        <div
+          onClick={() => onNavigateTab('messages')}
+          className="bg-white p-4 rounded-xl border border-neutral-200 hover:border-amber-600 transition cursor-pointer shadow-sm group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="p-2 bg-emerald-100 text-emerald-800 rounded-lg group-hover:scale-105 transition">
+              <MessageSquare className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded">
+              B2B Leads
+            </span>
+          </div>
+          <h3 className="font-serif font-bold text-sm text-neutral-900">Customer Enquiries</h3>
+          <p className="text-xs text-neutral-500 mt-1">Wholesale quote requests, custom sample inquiries, and WhatsApp messaging.</p>
+        </div>
       </div>
 
       {/* Metrics Grid */}
@@ -59,7 +129,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {orders.length}
           </div>
           <div className="text-[11px] text-neutral-500">
-            {newOrders.length} new • {codOrders.length} COD
+            {newOrders.length} new • {paidOrders.length} paid
           </div>
         </div>
 
