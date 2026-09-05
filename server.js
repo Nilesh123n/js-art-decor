@@ -5,6 +5,9 @@
  * This file boots and exports the compiled CommonJS Express application from `dist/server.cjs`.
  */
 
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+
 let app;
 
 try {
@@ -15,4 +18,4 @@ try {
   throw err;
 }
 
-module.exports = app;
+export default app;
