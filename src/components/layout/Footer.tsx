@@ -21,6 +21,10 @@ export const Footer: React.FC<FooterProps> = ({ settings, onNavigate }) => {
               About Us
             </button>
             <span className="text-[#333333]">|</span>
+            <button onClick={() => onNavigate('track-order')} className="hover:text-[#D4A017] text-[#D4A017] font-semibold transition">
+              Track Order
+            </button>
+            <span className="text-[#333333]">|</span>
             <button onClick={() => onNavigate('contact')} className="hover:text-[#D4A017] transition">
               Privacy Policy
             </button>

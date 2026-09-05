@@ -191,7 +191,7 @@ async function startServer() {
         address: settingsDb.address || "",
         free_shipping_threshold: Number(settingsDb.free_shipping_threshold || 2499),
         standard_shipping_fee: Number(settingsDb.standard_shipping_fee || 150),
-        enable_cod: settingsDb.enable_cod !== undefined ? settingsDb.enable_cod : true,
+        enable_cod: false,
         razorpay_key_id: process.env.RAZORPAY_KEY_ID || settingsDb.razorpay_key_id || ""
       }
     });
@@ -278,71 +278,44 @@ async function startServer() {
     const now = new Date().toISOString().replace("T", " ").substring(0, 19);
 
     if (payment_method === "COD") {
-      // Deduct stock
-      for (const vi of validatedItems) {
-        const prod = productsDb.find((p) => p.id === vi.productId);
-        if (prod) prod.stock_quantity -= vi.quantity;
-      }
-
-      const newOrder = {
-        id: Date.now(),
-        orderNumber,
-        customer,
-        items: validatedItems,
-        subtotal,
-        shippingFee,
-        totalAmount,
-        paymentMethod: "COD",
-        paymentStatus: "Pending",
-        orderStatus: "New",
-        orderType: order_type || "Retail",
-        stockRestored: false,
-        createdAt: now
-      };
-
-      ordersDb.unshift(newOrder);
-
-      return res.json({
-        success: true,
-        payment_method: "COD",
-        order_id: newOrder.id,
-        order_number: orderNumber,
-        total_amount: totalAmount
-      });
-    } else {
-      // Razorpay
-      const razorpayKeyId = process.env.RAZORPAY_KEY_ID || settingsDb.razorpay_key_id || "";
-      const razorpayOrderId = "order_rzp_" + crypto.randomBytes(6).toString("hex");
-
-      const newOrder = {
-        id: Date.now(),
-        orderNumber,
-        customer,
-        items: validatedItems,
-        subtotal,
-        shippingFee,
-        totalAmount,
-        paymentMethod: "Razorpay",
-        paymentStatus: "Pending",
-        razorpayOrderId,
-        orderStatus: "New",
-        orderType: order_type || "Retail",
-        stockRestored: false,
-        createdAt: now
-      };
-
-      ordersDb.unshift(newOrder);
-
-      return res.json({
-        success: true,
-        payment_method: "Razorpay",
-        order_id: newOrder.id,
-        order_number: orderNumber,
-        razorpay_order_id: razorpayOrderId,
-        amount: Math.round(totalAmount * 100),
-        key_id: razorpayKeyId
+      return res.status(400).json({
+        success: false,
+        error: "Cash on Delivery (COD) is disabled. Please complete your purchase using secure Instant Online Payment."
       });
     }
+
+    // Online Payment (Razorpay)
+    const razorpayKeyId = process.env.RAZORPAY_KEY_ID || settingsDb.razorpay_key_id || "rzp_test_jsartdecor";
+    const razorpayOrderId = "order_rzp_" + crypto.randomBytes(6).toString("hex");
+
+    const newOrder = {
+      id: Date.now(),
+      orderNumber,
+      customer,
+      items: validatedItems,
+      subtotal,
+      shippingFee,
+      totalAmount,
+      paymentMethod: "Razorpay",
+      paymentStatus: "Pending",
+      razorpayOrderId,
+      orderStatus: "New",
+      orderType: order_type || "Retail",
+      stockRestored: false,
+      createdAt: now
+    };
+
+    ordersDb.unshift(newOrder);
+
+    return res.json({
+      success: true,
+      payment_method: "Razorpay",
+      order_id: newOrder.id,
+      order_number: orderNumber,
+      razorpay_order_id: razorpayOrderId,
+      amount: Math.round(totalAmount * 100),
+      key_id: razorpayKeyId
+    });
   });
 
   // Verify Payment
@@ -383,6 +356,205 @@ async function startServer() {
       message: "Payment verified successfully.",
       order_id: order.id,
       order_number: order.orderNumber
+    });
+  });
+
+  // -------------------------------------------------------------
+  // TRACK ORDER ENDPOINT (Comprehensive Tracking with Milestones)
+  // -------------------------------------------------------------
+  app.all(["/api/orders/track.php", "/api/orders/track"], async (req, res) => {
+    const queryOrderNo = (req.query.order_number || req.body?.order_number || "").toString().trim();
+    const queryContact = (req.query.contact || req.query.mobile || req.body?.contact || req.body?.mobile || "").toString().trim();
+
+    if (!queryOrderNo && !queryContact) {
+      return res.status(400).json({
+        success: false,
+        error: "Please enter your Order Number or registered Mobile Number to track your order."
+      });
+    }
+
+    // 1. Try finding in in-memory database
+    let foundOrder = ordersDb.find((o) => {
+      if (queryOrderNo) {
+        const orderClean = o.orderNumber.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        const searchClean = queryOrderNo.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        return orderClean === searchClean || orderClean.includes(searchClean);
+      }
+      if (queryContact) {
+        const mob = (o.customer?.mobileNumber || "").replace(/[^0-9]/g, "");
+        const email = (o.customer?.email || "").toLowerCase();
+        const contactClean = queryContact.replace(/[^0-9]/g, "");
+        return (contactClean && mob.includes(contactClean)) || email === queryContact.toLowerCase();
+      }
+      return false;
+    });
+
+    // 2. If MySQL is connected, check MySQL database as well
+    if (!foundOrder && mysqlPool) {
+      try {
+        let sql = "SELECT * FROM orders WHERE 1=1";
+        const params: any[] = [];
+        if (queryOrderNo) {
+          sql += " AND (order_number = ? OR order_number LIKE ?)";
+          params.push(queryOrderNo, `%${queryOrderNo}%`);
+        } else if (queryContact) {
+          sql += " AND (mobile_number LIKE ? OR email = ?)";
+          params.push(`%${queryContact}%`, queryContact);
+        }
+        sql += " ORDER BY id DESC LIMIT 1";
+
+        const [rows]: any = await mysqlPool.query(sql, params);
+        if (rows && rows.length > 0) {
+          const row = rows[0];
+          // fetch items
+          const [itemsRows]: any = await mysqlPool.query(
+            "SELECT * FROM order_items WHERE order_id = ?",
+            [row.id]
+          );
+
+          foundOrder = {
+            id: row.id,
+            orderNumber: row.order_number,
+            customer: {
+              fullName: row.customer_name,
+              mobileNumber: row.mobile_number,
+              email: row.email,
+              address: row.address,
+              city: row.city,
+              state: row.state,
+              pinCode: row.pin_code,
+              orderNotes: row.order_notes
+            },
+            items: itemsRows.map((it: any) => ({
+              productId: it.product_id,
+              productName: it.product_name,
+              sku: it.sku,
+              quantity: Number(it.quantity),
+              unitPrice: Number(it.unit_price),
+              subtotal: Number(it.subtotal),
+              itemType: it.item_type
+            })),
+            subtotal: Number(row.subtotal),
+            shippingFee: Number(row.shipping_fee),
+            totalAmount: Number(row.total_amount),
+            paymentMethod: row.payment_method,
+            paymentStatus: row.payment_status,
+            razorpayPaymentId: row.razorpay_payment_id,
+            orderStatus: row.order_status,
+            orderType: row.order_type,
+            createdAt: row.created_at
+          };
+        }
+      } catch (dbErr) {
+        console.error("Error querying MySQL for order tracking:", dbErr);
+      }
+    }
+
+    if (!foundOrder) {
+      return res.status(404).json({
+        success: false,
+        error: `No order found with reference "${queryOrderNo || queryContact}". Please check your order number or WhatsApp support.`
+      });
+    }
+
+    // Format rich tracking timeline and courier info
+    const createdAtDate = new Date(foundOrder.createdAt || Date.now());
+    const orderStatus = foundOrder.orderStatus || "Confirmed";
+    const paymentStatus = foundOrder.paymentStatus || "Paid";
+
+    const isConfirmed = ["Confirmed", "Processing", "Shipped", "Delivered"].includes(orderStatus) || paymentStatus === "Paid";
+    const isProcessing = ["Processing", "Shipped", "Delivered"].includes(orderStatus);
+    const isShipped = ["Shipped", "Delivered"].includes(orderStatus);
+    const isDelivered = orderStatus === "Delivered";
+
+    const timeline = [
+      {
+        step: 1,
+        title: "Order Placed & Payment Confirmed",
+        description: `Payment verified via ${foundOrder.paymentMethod || "Online Gateway"} (${paymentStatus}). Dispatched to Jaipur artisan hub.`,
+        timestamp: foundOrder.createdAt,
+        completed: isConfirmed,
+        current: !isProcessing
+      },
+      {
+        step: 2,
+        title: "Artisan Crafting & Workshop Processing",
+        description: "Items selected from handcrafted inventory, inspected for artistic finish and packed at Jaipur central workshop.",
+        timestamp: new Date(createdAtDate.getTime() + 1000 * 60 * 60 * 6).toISOString().replace("T", " ").substring(0, 19),
+        completed: isProcessing,
+        current: isProcessing && !isShipped
+      },
+      {
+        step: 3,
+        title: "Quality Inspection & Secure Packaging",
+        description: "Multi-point structural check completed. Wrapped in eco-friendly protective shockproof packaging.",
+        timestamp: new Date(createdAtDate.getTime() + 1000 * 60 * 60 * 24).toISOString().replace("T", " ").substring(0, 19),
+        completed: isProcessing,
+        current: false
+      },
+      {
+        step: 4,
+        title: "Dispatched via Express Courier",
+        description: "Handed over to courier partner. In transit towards destination delivery hub.",
+        timestamp: new Date(createdAtDate.getTime() + 1000 * 60 * 60 * 48).toISOString().replace("T", " ").substring(0, 19),
+        completed: isShipped,
+        current: isShipped && !isDelivered
+      },
+      {
+        step: 5,
+        title: "Out for Delivery & Delivered",
+        description: "Delivery executive will deliver the package to your doorstep with OTP / signature.",
+        timestamp: new Date(createdAtDate.getTime() + 1000 * 60 * 60 * 96).toISOString().replace("T", " ").substring(0, 19),
+        completed: isDelivered,
+        current: isDelivered
+      }
+    ];
+
+    const estDate = new Date(createdAtDate.getTime() + 1000 * 60 * 60 * 24 * 5);
+    const estimatedDelivery = estDate.toLocaleDateString("en-IN", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+
+    const digitsOnly = (foundOrder.orderNumber || "").replace(/[^0-9]/g, "");
+    const trackingAwb = "JSA-EXP-" + (digitsOnly.slice(-6) || "782910");
+
+    const enrichedItems = (foundOrder.items || []).map((item: any) => {
+      const prod = productsDb.find((p) => p.id === (item.productId || item.product_id));
+      return {
+        productId: item.productId || item.product_id,
+        productName: item.productName || item.product_name || prod?.name || "Handcrafted Decor Item",
+        sku: item.sku || prod?.sku || "JS-ART",
+        quantity: item.quantity,
+        unitPrice: item.unitPrice || item.unit_price || 0,
+        subtotal: item.subtotal || (item.unitPrice || 0) * (item.quantity || 1),
+        image: prod?.images?.[0] || "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=400&q=80",
+        size: prod?.size || "Standard",
+        material: prod?.material || "Natural Handcrafted"
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        orderNumber: foundOrder.orderNumber,
+        orderStatus: foundOrder.orderStatus,
+        paymentStatus: foundOrder.paymentStatus,
+        paymentMethod: foundOrder.paymentMethod,
+        razorpayPaymentId: foundOrder.razorpayPaymentId || `pay_${digitsOnly || 'online'}`,
+        createdAt: foundOrder.createdAt,
+        estimatedDelivery,
+        courierPartner: "Delhivery Surface / Blue Dart Express",
+        trackingAwb,
+        customer: foundOrder.customer,
+        items: enrichedItems,
+        subtotal: foundOrder.subtotal,
+        shippingFee: foundOrder.shippingFee,
+        totalAmount: foundOrder.totalAmount,
+        timeline
+      }
     });
   });
 

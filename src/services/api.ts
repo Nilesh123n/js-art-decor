@@ -1,4 +1,4 @@
-import { Product, Order, Blog, Partner, ContactMessage, SiteSettings } from '../types/ecommerce';
+import { Product, Order, Blog, Partner, ContactMessage, SiteSettings, OrderTrackingData } from '../types/ecommerce';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
 
@@ -18,7 +18,7 @@ export interface CreateOrderPayload {
     quantity: number;
     item_type: 'Retail' | 'Wholesale';
   }>;
-  payment_method: 'Razorpay' | 'COD';
+  payment_method: 'Razorpay';
   order_type: 'Retail' | 'Wholesale';
 }
 
@@ -192,6 +192,20 @@ export const ApiService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+    return await handleResponse<any>(res);
+  },
+
+  async trackOrder(orderNumber: string, contact?: string): Promise<{
+    success: boolean;
+    data?: OrderTrackingData;
+    error?: string;
+    message?: string;
+  }> {
+    let url = `${API_BASE_URL}/orders/track.php?order_number=${encodeURIComponent(orderNumber.trim())}`;
+    if (contact && contact.trim()) {
+      url += `&contact=${encodeURIComponent(contact.trim())}`;
+    }
+    const res = await fetch(url);
     return await handleResponse<any>(res);
   },
 

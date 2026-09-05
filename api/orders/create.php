@@ -15,7 +15,13 @@ if (!$input || empty($input['customer']) || empty($input['items']) || !is_array(
 
 $customer = $input['customer'];
 $items = $input['items'];
-$payment_method = ($input['payment_method'] ?? 'Razorpay') === 'COD' ? 'COD' : 'Razorpay';
+$payment_method = 'Razorpay';
+
+if (($input['payment_method'] ?? '') === 'COD') {
+    http_response_code(400);
+    echo json_encode(["success" => false, "error" => "Cash on Delivery (COD) is disabled. Please pay securely online via Razorpay."]);
+    exit();
+}
 $order_type = ($input['order_type'] ?? 'Retail') === 'Wholesale' ? 'Wholesale' : 'Retail';
 
 // Validate customer details

@@ -9,6 +9,7 @@ import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderSuccessPage } from './pages/OrderSuccessPage';
+import { TrackOrderPage } from './pages/TrackOrderPage';
 import { BlogPage } from './pages/BlogPage';
 import { PartnersPage } from './pages/PartnersPage';
 import { ContactPage } from './pages/ContactPage';
@@ -83,7 +84,7 @@ export default function App() {
         address: settingsRes.address || '',
         free_shipping_threshold: Number(settingsRes.free_shipping_threshold || 0),
         standard_shipping_fee: Number(settingsRes.standard_shipping_fee || 0),
-        enable_cod: settingsRes.enable_cod !== false,
+        enable_cod: false,
         razorpay_key_id: settingsRes.razorpay_key_id || ''
       };
 
@@ -348,6 +349,14 @@ export default function App() {
         {activeView === 'order-success' && viewParam?.orderId && (
           <OrderSuccessPage
             orderId={viewParam.orderId}
+            settings={settings}
+            onNavigate={handleNavigate}
+          />
+        )}
+
+        {activeView === 'track-order' && (
+          <TrackOrderPage
+            orderId={viewParam?.orderId}
             settings={settings}
             onNavigate={handleNavigate}
           />

@@ -502,7 +502,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   contact_email: 'info@jsartdecor.com',
   address: 'JSArt&Decor Textile & Art Hub, Phase II Industrial Estate, Jaipur, Rajasthan 302022, India',
   razorpay_key_id: '',
-  enable_cod: true,
+  enable_cod: false,
   free_shipping_threshold: 2499,
   standard_shipping_fee: 150
 };

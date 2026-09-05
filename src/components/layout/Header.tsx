@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Menu, X, Search, Phone, Mail, ChevronDown, Instagram, Facebook, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, Search, Phone, Mail, ChevronDown, Instagram, Facebook, User, Truck } from 'lucide-react';
 import { LogoPlaceholder } from '../common/LogoPlaceholder';
 import { SiteSettings } from '../../types/ecommerce';
 
@@ -66,10 +66,11 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
-              onClick={() => onNavigate('cart')}
-              className="hidden sm:inline-block text-[#EEEEEE] hover:text-[#D4A017] font-medium transition"
+              onClick={() => onNavigate('track-order')}
+              className="hidden sm:flex items-center gap-1 text-[#EEEEEE] hover:text-[#D4A017] font-medium transition"
             >
-              Track Order
+              <Truck className="w-3.5 h-3.5 text-[#D4A017]" />
+              <span>Track Order</span>
             </button>
 
             {/* Social icons (Facebook, Instagram, Pinterest) */}
@@ -230,6 +231,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               CONTACT US
             </button>
+
+            <button
+              onClick={() => onNavigate('track-order')}
+              className={`py-1 border-b-2 flex items-center gap-1.5 transition-all ${
+                activeView === 'track-order'
+                  ? 'border-[#D4A017] text-[#D4A017] font-bold'
+                  : 'border-transparent text-[#DDDDDD] hover:text-[#D4A017]'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5 text-[#D4A017]" />
+              <span>TRACK ORDER</span>
+            </button>
           </nav>
 
           {/* Inline Text Input Search Bar (Desktop & Tablet) */}
@@ -361,6 +374,14 @@ export const Header: React.FC<HeaderProps> = ({
               className="p-2 text-left hover:text-[#D4A017] transition border-b border-[#1A1A1A]"
             >
               CONTACT US
+            </button>
+
+            <button
+              onClick={() => { onNavigate('track-order'); setMobileMenuOpen(false); }}
+              className="p-2 text-left hover:text-[#D4A017] transition border-b border-[#1A1A1A] flex items-center gap-2"
+            >
+              <Truck className="w-4 h-4 text-[#D4A017]" />
+              <span>TRACK ORDER</span>
             </button>
 
             <button

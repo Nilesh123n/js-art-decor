@@ -40,6 +40,45 @@ export type OrderStatus = 'New' | 'Confirmed' | 'Processing' | 'Shipped' | 'Deli
 export type PaymentStatus = 'Pending' | 'Paid' | 'Failed';
 export type PaymentMethod = 'Razorpay' | 'COD';
 
+export interface OrderTimelineMilestone {
+  step: number;
+  title: string;
+  description: string;
+  timestamp?: string;
+  completed: boolean;
+  current: boolean;
+}
+
+export interface OrderTrackingItem {
+  productId: number;
+  productName: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  image?: string;
+  size?: string;
+  material?: string;
+}
+
+export interface OrderTrackingData {
+  orderNumber: string;
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: string;
+  razorpayPaymentId?: string;
+  createdAt: string;
+  estimatedDelivery: string;
+  courierPartner: string;
+  trackingAwb: string;
+  customer: OrderCustomer;
+  items: OrderTrackingItem[];
+  subtotal: number;
+  shippingFee: number;
+  totalAmount: number;
+  timeline: OrderTimelineMilestone[];
+}
+
 export interface OrderCustomer {
   fullName: string;
   mobileNumber: string;
