@@ -4,6 +4,7 @@ import { Product, Blog, Partner, SiteSettings, Banner, PageSection } from '../ty
 import { ProductCarousel } from '../components/common/ProductCarousel';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { ApiService } from '../services/api';
+import { ArtDecorPlannerModal, PlannerSegment } from '../components/planner/ArtDecorPlannerModal';
 
 import heroGold1 from '../assets/images/hero_gold_decor_1_1786612841855.jpg';
 import heroGold2 from '../assets/images/hero_gold_decor_2_1786612862864.jpg';
@@ -35,6 +36,13 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [heroSlide, setHeroSlide] = useState(0);
   const [dbBanners, setDbBanners] = useState<Banner[]>([]);
   const [dbSections, setDbSections] = useState<PageSection[]>([]);
+  const [plannerModalOpen, setPlannerModalOpen] = useState<boolean>(false);
+  const [plannerInitialSegment, setPlannerInitialSegment] = useState<PlannerSegment>('Home');
+
+  const handleOpenPlanner = (segment: PlannerSegment) => {
+    setPlannerInitialSegment(segment);
+    setPlannerModalOpen(true);
+  };
 
   useEffect(() => {
     // Load dynamic banners and sections from MySQL
@@ -273,160 +281,274 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* -------------------------------------------------- */}
-      {/* 3. HOME / HOTEL / EVENT CARDS WITH GOLDEN BORDER */}
+      {/* 3. HOME / HOTEL / EVENT CARDS - ORDERED VERTICALLY WITH ART & DECOR PLANNER BUTTON */}
       {/* -------------------------------------------------- */}
-      <section className="bg-[#000000] py-10 border-b border-[#D4A017]/30">
+      <section className="bg-[#000000] py-12 border-b border-[#D4A017]/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* HOME CARD */}
+          <div className="text-center max-w-3xl mx-auto mb-8 space-y-2">
+            <span className="text-[10px] font-mono tracking-widest text-[#D4A017] uppercase bg-[#D4A017]/10 px-3 py-1 rounded-full border border-[#D4A017]/30">
+              EXPLORE BY SEGMENT
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-wide">
+              Tailored Decor for Home, Hospitality &amp; Events
+            </h2>
+            <p className="text-xs sm:text-sm text-[#AAAAAA] font-light">
+              Explore curated collections or use our dedicated <strong className="text-[#D4A017]">Art &amp; Decor Planner</strong> to receive custom styling, fabric samples, and factory-direct estimates.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-6 sm:gap-8">
+            {/* 1. HOME CARD */}
             <div 
-              className="group relative min-h-[22rem] rounded-xl overflow-hidden border-2 border-[#D4A017] hover:border-[#E5B842] shadow-[0_0_15px_rgba(212,160,23,0.3)] hover:shadow-[0_0_28px_rgba(212,160,23,0.55)] transition-all duration-300 flex flex-col justify-end p-5"
+              id="segment-card-home"
+              className="group relative min-h-[22rem] md:min-h-[19rem] rounded-2xl overflow-hidden border-2 border-[#D4A017] hover:border-[#E5B842] shadow-[0_0_20px_rgba(212,160,23,0.3)] hover:shadow-[0_0_35px_rgba(212,160,23,0.6)] transition-all duration-300 flex flex-col justify-end p-6 sm:p-8"
             >
               <ImageWithFallback 
-                src="https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=800&q=80" 
+                src="https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=1600&q=80" 
                 alt="HOME"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/75 to-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#000000] via-[#000000]/85 to-black/35" />
               
-              <div className="relative z-10 text-center text-white space-y-3">
-                <span className="text-[10px] font-mono tracking-widest text-[#D4A017] uppercase">SEGMENT 01</span>
-                <h3 className="text-2xl font-serif font-bold text-white tracking-widest">HOME</h3>
-                <p className="text-xs text-[#CCCCCC] font-light max-w-xs mx-auto leading-relaxed">
-                  Premium bedding, luxury cushions, art pieces & ambient lighting for home living
-                </p>
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div className="space-y-3 max-w-xl text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono tracking-widest text-[#D4A017] uppercase bg-[#D4A017]/20 border border-[#D4A017]/40 px-2 py-0.5 rounded">
+                      SEGMENT 01 • RESIDENTIAL &amp; LIVING
+                    </span>
+                  </div>
+                  <h3 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-widest">
+                    HOME
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#CCCCCC] font-light leading-relaxed">
+                    Premium cotton bedding, luxury velvet embroidered cushions, artisanal handcrafted brass wall art, and ambient lighting tailored for private residences and villas.
+                  </p>
 
-                {/* 3 Dedicated Category Buttons */}
-                <div className="pt-2 grid grid-cols-3 gap-2">
+                  {/* 3 Dedicated Category Buttons */}
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Home', product_type: 'HOME DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Textile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Home', product_type: 'ART DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Art Decor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Home', product_type: 'ELECTRIC DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Electric Decor
+                    </button>
+                  </div>
+                </div>
+
+                {/* ART & DECOR PLANNER BUTTON & PROMO */}
+                <div className="bg-black/80 backdrop-blur-md p-4 sm:p-5 rounded-xl border border-[#D4A017]/40 text-center lg:text-right space-y-3 shrink-0 lg:min-w-[280px]">
+                  <div className="text-[11px] text-[#A3A3A3] font-light">
+                    Planning a home renovation or room styling?
+                  </div>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Home', product_type: 'HOME DECOR' });
+                      handleOpenPlanner('Home');
                     }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    className="w-full bg-gradient-to-r from-[#D4A017] via-[#F3E5AB] to-[#D4A017] hover:from-[#E5B842] hover:to-[#C59012] text-black font-serif font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-[0_0_20px_rgba(212,160,23,0.4)] flex items-center justify-center gap-2 transition-all transform hover:scale-102 uppercase tracking-wider group cursor-pointer"
                   >
-                    Home Decor
+                    <Sparkles className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
+                    <span>Art &amp; Decor Planner</span>
+                    <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Home', product_type: 'ART DECOR' });
-                    }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                  >
-                    Art Decor
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Home', product_type: 'ELECTRIC DECOR' });
-                    }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                  >
-                    Electric Decor
-                  </button>
+                  <div className="text-[10px] text-[#D4A017] font-mono">
+                    Free Consultation • Custom Swatches
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* HOTEL CARD */}
+            {/* 2. HOTEL CARD */}
             <div 
-              className="group relative min-h-[22rem] rounded-xl overflow-hidden border-2 border-[#D4A017] hover:border-[#E5B842] shadow-[0_0_15px_rgba(212,160,23,0.3)] hover:shadow-[0_0_28px_rgba(212,160,23,0.55)] transition-all duration-300 flex flex-col justify-end p-5"
+              id="segment-card-hotel"
+              className="group relative min-h-[22rem] md:min-h-[19rem] rounded-2xl overflow-hidden border-2 border-[#D4A017] hover:border-[#E5B842] shadow-[0_0_20px_rgba(212,160,23,0.3)] hover:shadow-[0_0_35px_rgba(212,160,23,0.6)] transition-all duration-300 flex flex-col justify-end p-6 sm:p-8"
             >
               <ImageWithFallback 
-                src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80" 
+                src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1600&q=80" 
                 alt="HOTEL"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/75 to-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#000000] via-[#000000]/85 to-black/35" />
               
-              <div className="relative z-10 text-center text-white space-y-3">
-                <span className="text-[10px] font-mono tracking-widest text-[#D4A017] uppercase">SEGMENT 02</span>
-                <h3 className="text-2xl font-serif font-bold text-white tracking-widest">HOTEL</h3>
-                <p className="text-xs text-[#CCCCCC] font-light max-w-xs mx-auto leading-relaxed">
-                  Hospitality grade 400 TC satin linens, lobby brass sculptures & luxury chandeliers
-                </p>
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div className="space-y-3 max-w-xl text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono tracking-widest text-[#D4A017] uppercase bg-[#D4A017]/20 border border-[#D4A017]/40 px-2 py-0.5 rounded">
+                      SEGMENT 02 • HOSPITALITY &amp; RESORTS
+                    </span>
+                  </div>
+                  <h3 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-widest">
+                    HOTEL
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#CCCCCC] font-light leading-relaxed">
+                    Hospitality-grade 400 TC satin stripe bed linens, luxury lobby brass metal installations, banquet table runners, and commercial chandeliers engineered for luxury hotels and resorts.
+                  </p>
 
-                {/* 3 Dedicated Category Buttons */}
-                <div className="pt-2 grid grid-cols-3 gap-2">
+                  {/* 3 Dedicated Category Buttons */}
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Hotel', product_type: 'HOME DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Textile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Hotel', product_type: 'ART DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Art Decor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Hotel', product_type: 'ELECTRIC DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Electric Decor
+                    </button>
+                  </div>
+                </div>
+
+                {/* ART & DECOR PLANNER BUTTON & PROMO */}
+                <div className="bg-black/80 backdrop-blur-md p-4 sm:p-5 rounded-xl border border-[#D4A017]/40 text-center lg:text-right space-y-3 shrink-0 lg:min-w-[280px]">
+                  <div className="text-[11px] text-[#A3A3A3] font-light">
+                    Boutique hotel, resort or banquet revamp?
+                  </div>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Hotel', product_type: 'HOME DECOR' });
+                      handleOpenPlanner('Hotel');
                     }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    className="w-full bg-gradient-to-r from-[#D4A017] via-[#F3E5AB] to-[#D4A017] hover:from-[#E5B842] hover:to-[#C59012] text-black font-serif font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-[0_0_20px_rgba(212,160,23,0.4)] flex items-center justify-center gap-2 transition-all transform hover:scale-102 uppercase tracking-wider group cursor-pointer"
                   >
-                    Home Decor
+                    <Sparkles className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
+                    <span>Art &amp; Decor Planner</span>
+                    <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Hotel', product_type: 'ART DECOR' });
-                    }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                  >
-                    Art Decor
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Hotel', product_type: 'ELECTRIC DECOR' });
-                    }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                  >
-                    Electric Decor
-                  </button>
+                  <div className="text-[10px] text-[#D4A017] font-mono">
+                    Bulk Factory Pricing • Sample Kits
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* EVENT CARD */}
+            {/* 3. EVENT CARD */}
             <div 
-              className="group relative min-h-[22rem] rounded-xl overflow-hidden border-2 border-[#D4A017] hover:border-[#E5B842] shadow-[0_0_15px_rgba(212,160,23,0.3)] hover:shadow-[0_0_28px_rgba(212,160,23,0.55)] transition-all duration-300 flex flex-col justify-end p-5"
+              id="segment-card-event"
+              className="group relative min-h-[22rem] md:min-h-[19rem] rounded-2xl overflow-hidden border-2 border-[#D4A017] hover:border-[#E5B842] shadow-[0_0_20px_rgba(212,160,23,0.3)] hover:shadow-[0_0_35px_rgba(212,160,23,0.6)] transition-all duration-300 flex flex-col justify-end p-6 sm:p-8"
             >
               <ImageWithFallback 
-                src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=800&q=80" 
+                src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1600&q=80" 
                 alt="EVENT"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/75 to-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#000000] via-[#000000]/85 to-black/35" />
               
-              <div className="relative z-10 text-center text-white space-y-3">
-                <span className="text-[10px] font-mono tracking-widest text-[#D4A017] uppercase">SEGMENT 03</span>
-                <h3 className="text-2xl font-serif font-bold text-white tracking-widest">EVENT</h3>
-                <p className="text-xs text-[#CCCCCC] font-light max-w-xs mx-auto leading-relaxed">
-                  Zardozi velvet runners, antique terracotta accents & illuminated stage fixtures
-                </p>
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div className="space-y-3 max-w-xl text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono tracking-widest text-[#D4A017] uppercase bg-[#D4A017]/20 border border-[#D4A017]/40 px-2 py-0.5 rounded">
+                      SEGMENT 03 • WEDDINGS &amp; CELEBRATIONS
+                    </span>
+                  </div>
+                  <h3 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-widest">
+                    EVENT
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#CCCCCC] font-light leading-relaxed">
+                    Opulent handcrafted zardozi velvet runners, antique terracotta accents, grand mandap stage installations, and illuminated crystal fixtures for memorable celebrations.
+                  </p>
 
-                {/* 3 Dedicated Category Buttons */}
-                <div className="pt-2 grid grid-cols-3 gap-2">
+                  {/* 3 Dedicated Category Buttons */}
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Event', product_type: 'HOME DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Textile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Event', product_type: 'ART DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Art Decor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigate('catalog', { segment: 'Event', product_type: 'ELECTRIC DECOR' });
+                      }}
+                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    >
+                      Electric Decor
+                    </button>
+                  </div>
+                </div>
+
+                {/* ART & DECOR PLANNER BUTTON & PROMO */}
+                <div className="bg-black/80 backdrop-blur-md p-4 sm:p-5 rounded-xl border border-[#D4A017]/40 text-center lg:text-right space-y-3 shrink-0 lg:min-w-[280px]">
+                  <div className="text-[11px] text-[#A3A3A3] font-light">
+                    Wedding, reception or corporate gala setup?
+                  </div>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Event', product_type: 'HOME DECOR' });
+                      handleOpenPlanner('Event');
                     }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
+                    className="w-full bg-gradient-to-r from-[#D4A017] via-[#F3E5AB] to-[#D4A017] hover:from-[#E5B842] hover:to-[#C59012] text-black font-serif font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-[0_0_20px_rgba(212,160,23,0.4)] flex items-center justify-center gap-2 transition-all transform hover:scale-102 uppercase tracking-wider group cursor-pointer"
                   >
-                    Home Decor
+                    <Sparkles className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
+                    <span>Art &amp; Decor Planner</span>
+                    <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Event', product_type: 'ART DECOR' });
-                    }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                  >
-                    Art Decor
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigate('catalog', { segment: 'Event', product_type: 'ELECTRIC DECOR' });
-                    }}
-                    className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-[11px] font-bold py-2 px-1 rounded transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                  >
-                    Electric Decor
-                  </button>
+                  <div className="text-[10px] text-[#D4A017] font-mono">
+                    Theme Concepts • Turnkey Delivery
+                  </div>
                 </div>
               </div>
             </div>
@@ -698,6 +820,14 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Art & Decor Planner Studio Modal */}
+      <ArtDecorPlannerModal
+        isOpen={plannerModalOpen}
+        onClose={() => setPlannerModalOpen(false)}
+        initialSegment={plannerInitialSegment}
+        whatsappNumber={settings.whatsapp_number}
+      />
     </div>
   );
 };

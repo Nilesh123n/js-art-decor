@@ -284,6 +284,65 @@ async function startServer() {
     });
   });
 
+  // Art & Decor Planner Submission
+  app.post(["/api/planner/submit.php", "/api/planner/submit"], async (req, res) => {
+    const { name, phone, mobile, email, segment, space_scale, theme, budget_range, timeline, city, notes, scope } = req.body || {};
+
+    const contactPhone = phone || mobile;
+    if (!name || !contactPhone) {
+      return res.status(400).json({ success: false, error: "Name and contact phone number are required." });
+    }
+
+    const refId = "PLAN-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const scopeStr = Array.isArray(scope) ? scope.join(", ") : (scope || "Comprehensive Styling");
+    const userEmail = email || `${contactPhone}@jsartdecor.in`;
+    const selectedSegment = segment || "All Segments";
+
+    const fullMessage = [
+      "--- ART & DECOR PLANNER SUBMISSION ---",
+      `Reference ID: ${refId}`,
+      `Target Segment: ${selectedSegment}`,
+      `Property / Event Scale: ${space_scale || "Standard"}`,
+      `Planning Scope / Items: ${scopeStr}`,
+      `Preferred Theme: ${theme || "Standard"}`,
+      `Budget Estimate: ${budget_range || "Standard"}`,
+      `Target Timeline: ${timeline || "Flexible"}`,
+      `City / Location: ${city || "Not specified"}`,
+      `Client Notes: ${notes || "None provided"}`
+    ].join("\n");
+
+    const newMsg = {
+      id: Date.now(),
+      name,
+      email: userEmail,
+      mobile: contactPhone,
+      enquiry_type: `Art & Decor Planner - ${selectedSegment}`,
+      subject: `Decor Plan: ${selectedSegment} (${space_scale || "Standard"})`,
+      message: fullMessage,
+      is_read: false,
+      created_at: new Date().toISOString().replace("T", " ").substring(0, 19)
+    };
+
+    contactMessagesDb.unshift(newMsg);
+
+    if (mysqlPool) {
+      try {
+        await mysqlPool.query(
+          "INSERT INTO contact_messages (name, email, mobile, enquiry_type, subject, message, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())",
+          [name, userEmail, contactPhone, newMsg.enquiry_type, newMsg.subject, fullMessage]
+        );
+      } catch (err: any) {
+        console.error("Failed to insert planner inquiry into MySQL:", err?.message || err);
+      }
+    }
+
+    res.json({
+      success: true,
+      reference_id: refId,
+      message: "Your Art & Decor Planning request has been submitted successfully! Our senior decor stylist will contact you with customized proposals and quotations shortly."
+    });
+  });
+
   // Create Order (COD & Razorpay)
   app.post(["/api/orders/create.php", "/api/orders/create"], (req, res) => {
     const { customer, items, payment_method, order_type } = req.body;

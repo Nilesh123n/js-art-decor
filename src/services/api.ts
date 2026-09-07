@@ -158,6 +158,59 @@ export const ApiService = {
     return { success: true, message: json.message || 'Enquiry submitted successfully' };
   },
 
+  async submitPlannerInquiry(payload: {
+    segment: string;
+    scope: string[];
+    space_scale: string;
+    theme: string;
+    budget_range: string;
+    timeline: string;
+    name: string;
+    email: string;
+    phone: string;
+    city: string;
+    notes?: string;
+  }): Promise<{ success: boolean; reference_id: string; message: string }> {
+    const url = `${API_BASE_URL}/planner/submit.php`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await handleResponse<any>(res);
+      return {
+        success: true,
+        reference_id: json.reference_id || ('PLAN-' + Math.random().toString(36).substring(2, 8).toUpperCase()),
+        message: json.message || 'Your Art & Decor Planning request has been submitted successfully!'
+      };
+    } catch {
+      // Fallback to contact submit if needed
+      const fallbackRes = await this.submitContact({
+        name: payload.name,
+        email: payload.email,
+        mobile: payload.phone,
+        enquiry_type: `Art & Decor Planner - ${payload.segment}`,
+        subject: `Decor Plan: ${payload.segment} (${payload.space_scale})`,
+        message: [
+          `Target Segment: ${payload.segment}`,
+          `Scale: ${payload.space_scale}`,
+          `Scope: ${payload.scope.join(', ')}`,
+          `Theme: ${payload.theme}`,
+          `Budget: ${payload.budget_range}`,
+          `Timeline: ${payload.timeline}`,
+          `City: ${payload.city}`,
+          `Notes: ${payload.notes || 'None'}`
+        ].join('\n')
+      });
+      return {
+        success: true,
+        reference_id: 'PLAN-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+        message: fallbackRes.message
+      };
+    }
+  },
+
   async createOrder(payload: CreateOrderPayload): Promise<{
     success: boolean;
     payment_method: 'Razorpay' | 'COD';
