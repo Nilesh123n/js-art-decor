@@ -1,0 +1,16 @@
+{
+  "store_name": "JSArt&Decor",
+  "logo_path": "/uploads/logo.png",
+  "contact_phone": "+91 98765 43210",
+  "whatsapp_number": "+91 98765 43210",
+  "contact_email": "info@jsartdecor.com",
+  "address": "JSArt&Decor Textile & Art Hub, Phase II Industrial Estate, Jaipur, Rajasthan 302022, India",
+  "razorpay_key_id": "",
+  "enable_cod": false,
+  "free_shipping_threshold": 2499,
+  "standard_shipping_fee": 150,
+  "imagekit_public_key": "",
+  "imagekit_url_endpoint": "",
+  "imagekit_private_key": "",
+  "logo_url": "/uploads/logo.png"
+}

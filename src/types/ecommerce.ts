@@ -218,6 +218,7 @@ export interface ImageKitUploadResult {
 export interface SiteSettings {
   store_name: string;
   logo_path: string;
+  logo_url?: string;
   contact_phone: string;
   whatsapp_number: string;
   contact_email: string;

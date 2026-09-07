@@ -1,122 +1,181 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface LogoPlaceholderProps {
   className?: string;
   variant?: 'light' | 'dark';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   layout?: 'horizontal' | 'stacked';
+  src?: string;
+  alt?: string;
+  showText?: boolean;
 }
 
 export const LogoPlaceholder: React.FC<LogoPlaceholderProps> = ({ 
   className = '', 
   variant = 'dark',
   size = 'md',
-  layout = 'stacked'
+  layout = 'horizontal',
+  src = '',
+  alt = 'Store Logo',
+  showText = false
 }) => {
+  const [imgError, setImgError] = useState(false);
+
+  // Reset imgError if src changes
+  useEffect(() => {
+    setImgError(false);
+  }, [src]);
+
   // Height sizing for the logo container in header so it displays clearly
   const sizeClasses = {
-    sm: 'h-10 sm:h-12',
-    md: 'h-14 sm:h-16',
-    lg: 'h-18 sm:h-22'
+    sm: 'h-9',
+    md: 'h-11 sm:h-12',
+    lg: 'h-14 sm:h-16',
+    xl: 'h-20 sm:h-24'
   }[size];
+
+  const iconSizes = {
+    sm: 'w-8 h-8',
+    md: 'w-10 h-10 sm:w-11 sm:h-11',
+    lg: 'w-14 h-14',
+    xl: 'w-20 h-20'
+  }[size];
+
+  const imgMaxSizes = {
+    sm: 'max-h-8 max-w-[140px]',
+    md: 'max-h-10 sm:max-h-12 max-w-[190px]',
+    lg: 'max-h-14 max-w-[240px]',
+    xl: 'max-h-20 max-w-[300px]'
+  }[size];
+
+  const titleSizes = {
+    sm: 'text-sm font-semibold tracking-wide',
+    md: 'text-base sm:text-lg font-bold tracking-wide',
+    lg: 'text-xl sm:text-2xl font-bold tracking-wide',
+    xl: 'text-2xl sm:text-3xl font-bold tracking-wide'
+  }[size];
+
+  const subtitleSizes = {
+    sm: 'text-[8px] tracking-[0.2em]',
+    md: 'text-[9px] sm:text-[10px] tracking-[0.25em]',
+    lg: 'text-xs tracking-[0.25em]',
+    xl: 'text-sm tracking-[0.3em]'
+  }[size];
+
+  const isDark = variant === 'dark';
+  const hasCustomLogo = Boolean(src && src.trim().length > 0 && !imgError);
 
   return (
     <div id="jsartdecor-logo-brand" className={`inline-flex items-center justify-center select-none group ${sizeClasses} ${className}`}>
-      <svg 
-        viewBox="0 0 220 170" 
-        className="h-full w-auto text-[#D4A017] drop-shadow-[0_1px_4px_rgba(212,160,23,0.35)] group-hover:drop-shadow-[0_2px_10px_rgba(212,160,23,0.6)] transition-all duration-300" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          {/* Rich Gold Metallic Gradient */}
-          <linearGradient id="goldLinear" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FCE08B" />
-            <stop offset="25%" stopColor="#D4A017" />
-            <stop offset="55%" stopColor="#B8860B" />
-            <stop offset="80%" stopColor="#E5B842" />
-            <stop offset="100%" stopColor="#A06E18" />
-          </linearGradient>
+      <div className={`flex ${layout === 'stacked' ? 'flex-col items-center text-center gap-1.5' : 'items-center gap-2.5 sm:gap-3'}`}>
+        
+        {hasCustomLogo ? (
+          /* Custom Uploaded Logo Image from Database/Settings */
+          <div className="flex items-center justify-center shrink-0">
+            <img
+              src={src}
+              alt={alt}
+              referrerPolicy="no-referrer"
+              onError={() => setImgError(true)}
+              className={`h-auto w-auto ${imgMaxSizes} object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-105`}
+            />
+          </div>
+        ) : (
+          /* Luxury Gold Monogram Badge Emblem */
+          <div className={`relative ${iconSizes} shrink-0 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,160,23,0.35)] group-hover:shadow-[0_0_22px_rgba(212,160,23,0.55)] transition-all duration-300`}>
+            <svg
+              viewBox="0 0 100 100"
+              className="w-full h-full drop-shadow-sm"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FFF2B2" />
+                  <stop offset="25%" stopColor="#D4A017" />
+                  <stop offset="50%" stopColor="#F7DB7D" />
+                  <stop offset="75%" stopColor="#A67C1E" />
+                  <stop offset="100%" stopColor="#E5C158" />
+                </linearGradient>
+                <radialGradient id="discBg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#1E1E1E" />
+                  <stop offset="85%" stopColor="#0A0A0A" />
+                  <stop offset="100%" stopColor="#000000" />
+                </radialGradient>
+                <linearGradient id="goldText" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FFF7CC" />
+                  <stop offset="50%" stopColor="#E2B743" />
+                  <stop offset="100%" stopColor="#99731C" />
+                </linearGradient>
+              </defs>
 
-          {/* Crisp Text Gold Gradient */}
-          <linearGradient id="goldTextGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#FFF2B2" />
-            <stop offset="30%" stopColor="#D4A017" />
-            <stop offset="70%" stopColor="#F7DB7D" />
-            <stop offset="100%" stopColor="#C59B27" />
-          </linearGradient>
-        </defs>
+              {/* Obsidian Circular Base */}
+              <circle cx="50" cy="50" r="47" fill="url(#discBg)" stroke="url(#goldRing)" strokeWidth="2.5" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#goldRing)" strokeWidth="0.8" strokeDasharray="1.5 1.5" opacity="0.8" />
 
-        {/* 1. TOP CREST CIRCLE (Center at X=110, Y=65, Radius R=50) */}
-        <g transform="translate(0, 0)">
-          {/* Outer Ring */}
-          <circle cx="110" cy="65" r="50" stroke="url(#goldLinear)" strokeWidth="2.5" fill="none" />
-          {/* Inner Dotted Ring */}
-          <circle cx="110" cy="65" r="44" stroke="url(#goldLinear)" strokeWidth="0.9" strokeDasharray="3 2" fill="none" opacity="0.85" />
+              {/* Architectural Arch / Gable silhouette at top */}
+              <path
+                d="M32 34 L50 20 L68 34"
+                stroke="url(#goldRing)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Hanging Lantern / Pendant Bell Lamp */}
+              <line x1="50" y1="20" x2="50" y2="28" stroke="url(#goldRing)" strokeWidth="1.2" />
+              <path d="M47 28 L53 28 L54 32 L46 32 Z" fill="url(#goldRing)" />
+              <circle cx="50" cy="33" r="1.5" fill="#FFE27A" />
 
-          {/* Top & Bottom Accent Diamonds */}
-          <polygon points="110,12 113,15 110,18 107,15" fill="url(#goldLinear)" />
-          <polygon points="110,112 113,115 110,118 107,115" fill="url(#goldLinear)" />
+              {/* Stylized Interlocking Monogram Ligature 'JS' */}
+              {/* 'J' Letter with Brocade Textile Sweep */}
+              <path
+                d="M34 38 H44 V58 C44 65 40 68 34 68 C29 68 25 65 24 61"
+                stroke="url(#goldText)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* 'S' Letter with Floral Swirls */}
+              <path
+                d="M66 43 C64 39 58 37 52 37 C45 37 41 41 41 46 C41 52 47 54 55 57 C64 60 67 64 67 70 C67 77 60 82 50 82 C41 82 35 77 34 71"
+                stroke="url(#goldRing)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
 
-          {/* Laurel Leaf Branch (Left Arc) */}
-          <path d="M 74,98 C 66,82 72,56 84,38" stroke="url(#goldLinear)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-          {/* Laurel Leaves */}
-          <path d="M 68,94 C 60,90 63,82 71,86 C 73,91 71,95 68,94 Z" fill="url(#goldLinear)" />
-          <path d="M 64,82 C 56,77 59,70 67,73 C 69,78 67,82 64,82 Z" fill="url(#goldLinear)" />
-          <path d="M 64,68 C 56,62 61,56 68,59 C 70,64 67,69 64,68 Z" fill="url(#goldLinear)" />
-          <path d="M 68,54 C 61,46 68,41 74,45 C 76,50 72,55 68,54 Z" fill="url(#goldLinear)" />
-          <path d="M 75,43 C 71,35 79,31 84,36 C 85,41 80,45 75,43 Z" fill="url(#goldLinear)" />
-          <path d="M 84,34 C 82,26 90,24 93,29 C 92,34 87,36 84,34 Z" fill="url(#goldLinear)" />
+              {/* Botanical Foliage Flourish */}
+              <path
+                d="M50 84 C48 81 44 80 43 83 C45 86 49 86 50 84 Z"
+                fill="url(#goldRing)"
+              />
+              <path
+                d="M50 84 C52 81 56 80 57 83 C55 86 51 86 50 84 Z"
+                fill="url(#goldRing)"
+              />
+            </svg>
+          </div>
+        )}
 
-          {/* Floral Scrollwork & Flower Motif (Top Right Arc) */}
-          <path d="M 118,17 C 132,18 148,27 156,42 M 156,42 C 162,54 159,70 150,82" stroke="url(#goldLinear)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-          {/* Top Right Flower Petal Motif */}
-          <path d="M 140,21 Q 146,13 151,20 Q 158,25 151,30 Q 146,35 141,28 Q 134,25 140,21 Z" fill="url(#goldLinear)" opacity="0.95" />
-          <circle cx="146" cy="23" r="2.2" fill="#FFF2A1" />
-          <path d="M 152,36 Q 159,34 157,41 Q 151,43 150,38 Z" fill="url(#goldLinear)" />
-          <path d="M 151,50 Q 158,52 154,58 Q 148,56 149,51 Z" fill="url(#goldLinear)" />
-          <path d="M 148,63 Q 154,67 149,72 Q 144,69 146,65 Z" fill="url(#goldLinear)" />
+        {/* Brand Typography (Only shown if explicitly requested via showText) */}
+        {showText && (
+          <div className={`flex flex-col ${layout === 'stacked' ? 'items-center' : 'text-left'}`}>
+            <span className={`font-serif ${titleSizes} font-bold leading-tight ${
+              isDark 
+                ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#FFF2B2] via-[#E6B83B] to-[#F5D56E]'
+                : 'text-neutral-900'
+            }`}>
+              JS Art &amp; Decor
+            </span>
+            <span className={`uppercase font-semibold ${subtitleSizes} ${
+              isDark ? 'text-[#D4A017]' : 'text-amber-800'
+            }`}>
+              Textile • Home Decor
+            </span>
+          </div>
+        )}
 
-          {/* Center Monogram: JS */}
-          <text 
-            x="110" 
-            y="78" 
-            textAnchor="middle" 
-            fontFamily="Playfair Display, Times New Roman, Georgia, serif" 
-            fontSize="44" 
-            fontWeight="bold" 
-            fill="url(#goldTextGrad)" 
-            letterSpacing="-1"
-          >
-            JS
-          </text>
-        </g>
-
-        {/* 2. BOTTOM TEXT SECTION ("ART & DECOR" directly UNDER JS crest) */}
-        <g transform="translate(0, 0)">
-          {/* Left Flank Line & Diamond Accent */}
-          <polygon points="12,148 16,144 20,148 16,152" fill="url(#goldLinear)" />
-          <line x1="24" y1="148" x2="48" y2="148" stroke="url(#goldLinear)" strokeWidth="1.4" />
-
-          {/* "ART & DECOR" Subtext centered under JS emblem */}
-          <text 
-            x="110" 
-            y="153" 
-            textAnchor="middle" 
-            fontFamily="Playfair Display, Georgia, Times New Roman, serif" 
-            fontSize="16" 
-            fontWeight="800" 
-            fill="url(#goldTextGrad)" 
-            letterSpacing="5"
-          >
-            ART & DECOR
-          </text>
-
-          {/* Right Flank Line & Diamond Accent */}
-          <line x1="172" y1="148" x2="196" y2="148" stroke="url(#goldLinear)" strokeWidth="1.4" />
-          <polygon points="200,148 204,144 208,148 204,152" fill="url(#goldLinear)" />
-        </g>
-      </svg>
+      </div>
     </div>
   );
 };

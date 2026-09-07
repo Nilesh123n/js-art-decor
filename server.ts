@@ -49,6 +49,60 @@ async function startServer() {
   let ordersDb: any[] = [...INITIAL_ORDERS];
   let contactMessagesDb: any[] = [];
   let settingsDb = { ...DEFAULT_SITE_SETTINGS };
+  const settingsStoreFile = path.join(process.cwd(), "database", "settings_store.json");
+
+  // Load persistent settings from disk if available
+  if (fs.existsSync(settingsStoreFile)) {
+    try {
+      const storedSettings = JSON.parse(fs.readFileSync(settingsStoreFile, "utf-8"));
+      settingsDb = { ...DEFAULT_SITE_SETTINGS, ...storedSettings };
+      console.log("[Settings] Loaded saved site settings from database/settings_store.json");
+    } catch (e) {
+      console.warn("[Settings] Could not parse settings_store.json", e);
+    }
+  }
+
+  // Helper to persist settings both to JSON and to MySQL settings table
+  const saveSettingsToDb = async (newSettings: any) => {
+    settingsDb = { ...settingsDb, ...newSettings };
+    try {
+      const dbDir = path.dirname(settingsStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(settingsStoreFile, JSON.stringify(settingsDb, null, 2), "utf-8");
+    } catch (e) {
+      console.error("[Settings] Failed to write settings_store.json:", e);
+    }
+
+    if (mysqlPool) {
+      try {
+        for (const [k, v] of Object.entries(newSettings)) {
+          await mysqlPool.query(
+            "INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+            [k, String(v ?? "")]
+          );
+        }
+        console.log("[Settings] Synchronized updated settings with MySQL database.");
+      } catch (err: any) {
+        console.error("[Settings] MySQL settings sync failed:", err?.message || err);
+      }
+    }
+  };
+
+  // If MySQL is already available on startup, query settings
+  if (mysqlPool) {
+    try {
+      const [rows]: any = await mysqlPool.query("SELECT setting_key, setting_value FROM settings");
+      if (Array.isArray(rows) && rows.length > 0) {
+        for (const row of rows) {
+          settingsDb[row.setting_key] = row.setting_value;
+        }
+        console.log(`[Settings] Loaded ${rows.length} settings records from MySQL database.`);
+      }
+    } catch (e) {
+      console.warn("[Settings] Could not query initial MySQL settings:", e);
+    }
+  }
+
   let activeAdminSessions = new Set<string>();
 
   // Ensure all /api responses set application/json Content-Type header
@@ -988,17 +1042,79 @@ async function startServer() {
   });
 
   // Admin Settings
-  app.all(["/api/admin/settings.php", "/api/admin/settings"], (req, res) => {
+  app.all(["/api/admin/settings.php", "/api/admin/settings"], async (req, res) => {
     if (req.method === "GET") {
       return res.json({ success: true, data: settingsDb });
     }
 
     if (req.method === "POST" || req.method === "PUT") {
-      settingsDb = { ...settingsDb, ...req.body };
-      return res.json({ success: true, message: "Settings updated successfully." });
+      await saveSettingsToDb(req.body || {});
+      return res.json({ 
+        success: true, 
+        message: "Settings updated and saved to database successfully.",
+        data: settingsDb
+      });
     }
 
     res.status(405).json({ success: false, error: "Method not allowed." });
+  });
+
+  // Admin Header Logo Upload & Database Sync
+  app.post(["/api/admin/upload_logo.php", "/api/admin/upload_logo", "/api/upload/logo"], async (req, res) => {
+    try {
+      const { logo_data, logo_url } = req.body || {};
+      let finalUrl = "";
+
+      if (logo_data && typeof logo_data === "string" && logo_data.startsWith("data:image/")) {
+        const matches = logo_data.match(/^data:image\/([a-zA-Z0-9\+\-]+);base64,(.+)$/);
+        if (matches) {
+          let ext = matches[1].toLowerCase();
+          if (ext === "svg+xml") ext = "svg";
+          if (!["jpg", "jpeg", "png", "webp", "svg", "gif"].includes(ext)) {
+            ext = "png";
+          }
+          const buffer = Buffer.from(matches[2], "base64");
+          const uploadsDir = path.join(process.cwd(), "uploads");
+          const publicUploadsDir = path.join(process.cwd(), "public", "uploads");
+
+          if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+          if (!fs.existsSync(publicUploadsDir)) fs.mkdirSync(publicUploadsDir, { recursive: true });
+
+          const safeFileName = `header_logo_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+          const filePath = path.join(uploadsDir, safeFileName);
+          const publicFilePath = path.join(publicUploadsDir, safeFileName);
+
+          fs.writeFileSync(filePath, buffer);
+          try {
+            fs.writeFileSync(publicFilePath, buffer);
+          } catch {}
+
+          finalUrl = `/uploads/${safeFileName}`;
+        }
+      } else if (logo_url && typeof logo_url === "string" && logo_url.trim().length > 0) {
+        finalUrl = logo_url.trim();
+      }
+
+      if (!finalUrl) {
+        return res.status(400).json({ success: false, error: "No valid image data or URL provided." });
+      }
+
+      await saveSettingsToDb({
+        logo_path: finalUrl,
+        logo_url: finalUrl
+      });
+
+      return res.json({
+        success: true,
+        logo_url: finalUrl,
+        logo_path: finalUrl,
+        data: settingsDb,
+        message: "Header logo uploaded and updated in database successfully."
+      });
+    } catch (err: any) {
+      console.error("[Logo Upload] Error:", err);
+      return res.status(500).json({ success: false, error: err?.message || "Failed to upload logo." });
+    }
   });
 
   // -------------------------------------------------------------

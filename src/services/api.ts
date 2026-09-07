@@ -517,6 +517,49 @@ export const ApiService = {
     await handleResponse<any>(res);
   },
 
+  async uploadHeaderLogo(fileOrBase64OrUrl: File | string, fileName?: string): Promise<{ logo_url: string; message: string }> {
+    let payload: { logo_data?: string; logo_url?: string; filename?: string } = {};
+
+    if (fileOrBase64OrUrl instanceof File) {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(fileOrBase64OrUrl);
+      });
+      payload = {
+        logo_data: base64,
+        filename: fileName || fileOrBase64OrUrl.name
+      };
+    } else if (typeof fileOrBase64OrUrl === 'string' && fileOrBase64OrUrl.startsWith('data:image/')) {
+      payload = {
+        logo_data: fileOrBase64OrUrl,
+        filename: fileName || 'logo.png'
+      };
+    } else {
+      payload = {
+        logo_url: fileOrBase64OrUrl,
+        filename: fileName || 'logo.png'
+      };
+    }
+
+    const url = `${API_BASE_URL}/admin/upload_logo.php`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCsrfHeader()
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const json = await handleResponse<any>(res);
+    return {
+      logo_url: json.logo_url || json.url,
+      message: json.message || 'Header logo uploaded and saved to database successfully.'
+    };
+  },
+
   // -------------------------------------------------------------
   // BANNERS API (HERO, PROMO, CATEGORY, CURATED)
   // -------------------------------------------------------------

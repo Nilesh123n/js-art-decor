@@ -97,10 +97,19 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           {/* Left: Brand Logo */}
           <button 
+            type="button"
+            id="header-brand-logo-btn"
             onClick={() => onNavigate('home')} 
-            className="text-left focus:outline-none flex items-center gap-2 group"
+            className="text-left focus:outline-none flex items-center group cursor-pointer transition-transform duration-200 hover:scale-105"
+            title="Home"
+            aria-label="Go to Home"
           >
-            <LogoPlaceholder variant="dark" size="md" />
+            <LogoPlaceholder 
+              variant="dark" 
+              size="md" 
+              src={settings.logo_path || settings.logo_url}
+              showText={false}
+            />
           </button>
 
           {/* Center: Desktop Navigation */}
