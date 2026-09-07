@@ -98,7 +98,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                   <label className="block font-bold text-[#CCCCCC] mb-1">Mobile Number</label>
                   <input
                     type="tel"
-                    placeholder="e.g. +91 98765 43210"
+                    placeholder="e.g. +91 86024 14046"
                     value={formData.mobile}
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                     className="w-full bg-[#141414] border border-[#333333] focus:border-[#D4A017] rounded-lg p-2.5 text-white placeholder:text-neutral-500 focus:outline-none"
@@ -173,7 +173,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                 <Phone className="w-5 h-5 text-[#D4A017] shrink-0" />
                 <div>
                   <div className="font-bold text-white">Phone Support</div>
-                  <div className="text-[#A3A3A3]">{settings.contact_phone}</div>
+                  <a href={`tel:${settings.contact_phone || '+91 86024 14046'}`} className="text-[#A3A3A3] hover:text-[#D4A017] transition block">
+                    {settings.contact_phone || '+91 86024 14046'}
+                  </a>
                 </div>
               </div>
 
@@ -181,14 +183,16 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
                 <Mail className="w-5 h-5 text-[#D4A017] shrink-0" />
                 <div>
                   <div className="font-bold text-white">Email Address</div>
-                  <div className="text-[#A3A3A3]">{settings.contact_email}</div>
+                  <a href={`mailto:${settings.contact_email || 'info.jsartanddecor@gmail.com'}`} className="text-[#A3A3A3] hover:text-[#D4A017] transition block">
+                    {settings.contact_email || 'info.jsartanddecor@gmail.com'}
+                  </a>
                 </div>
               </div>
             </div>
 
             <div className="pt-2 border-t border-[#D4A017]/30">
               <a
-                href={`https://wa.me/${(settings.whatsapp_number || '').replace(/[^0-9]/g, '')}?text=Hello%20JSArt%26Decor,%20I%20want%20to%20connect%20with%20sales.`}
+                href={`https://wa.me/${(settings.whatsapp_number || settings.contact_phone || '+91 86024 14046').replace(/[^0-9]/g, '')}?text=Hello%20JSArt%26Decor,%20I%20want%20to%20connect%20with%20sales.`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg"

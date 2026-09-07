@@ -168,13 +168,13 @@ CREATE TABLE IF NOT EXISTS `settings` (
   `setting_value` TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed Default Store Settings (No demo personal contact data or secrets)
+-- Seed Default Store Settings
 INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('store_name', 'JSArt&Decor'),
-('contact_phone', ''),
-('whatsapp_number', ''),
-('contact_email', ''),
-('address', ''),
+('contact_phone', '+91 86024 14046'),
+('whatsapp_number', '+91 86024 14046'),
+('contact_email', 'info.jsartanddecor@gmail.com'),
+('address', 'JSArt&Decor Textile & Art Hub, Phase II Industrial Estate, Jaipur, Rajasthan 302022, India'),
 ('free_shipping_threshold', '2499'),
 ('standard_shipping_fee', '150'),
 ('enable_cod', '0'),

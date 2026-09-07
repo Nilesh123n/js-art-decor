@@ -36,8 +36,8 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const phone = settings.contact_phone || '+91 9876543210';
-  const email = settings.contact_email || 'info@jsartanddecor.com';
+  const phone = settings.contact_phone || '+91 86024 14046';
+  const email = settings.contact_email || 'info.jsartanddecor@gmail.com';
 
   return (
     <header id="site-main-header" className="sticky top-0 z-50 bg-[#000000] border-b-2 border-[#D4A017] shadow-[0_4px_25px_rgba(212,160,23,0.25)]">

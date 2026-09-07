@@ -82,7 +82,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({ orderId, setting
 
   const whatsappPhone = settings?.whatsapp_number
     ? settings.whatsapp_number.replace(/[^0-9]/g, '')
-    : '919829012345';
+    : '918602414046';
 
   const getStepIcon = (step: number) => {
     switch (step) {
@@ -158,7 +158,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({ orderId, setting
                 <input
                   id="search-contact"
                   type="text"
-                  placeholder="e.g. 9876543210"
+                  placeholder="e.g. 8602414046 or email"
                   value={searchContact}
                   onChange={(e) => setSearchContact(e.target.value)}
                   className="w-full bg-[#141414] border border-[#333333] focus:border-[#D4A017] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-[#666666] focus:outline-none transition"

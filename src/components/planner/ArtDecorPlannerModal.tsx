@@ -176,7 +176,7 @@ export const ArtDecorPlannerModal: React.FC<ArtDecorPlannerModalProps> = ({
   isOpen,
   onClose,
   initialSegment = 'Home',
-  whatsappNumber = '+919876543210'
+  whatsappNumber = '+918602414046'
 }) => {
   const [selectedSegment, setSelectedSegment] = useState<PlannerSegment>(initialSegment);
   const [selectedScope, setSelectedScope] = useState<string[]>([]);
@@ -272,7 +272,7 @@ export const ArtDecorPlannerModal: React.FC<ArtDecorPlannerModalProps> = ({
     }
   };
 
-  const cleanWhatsapp = (whatsappNumber || '+919876543210').replace(/[^0-9]/g, '');
+  const cleanWhatsapp = (whatsappNumber || '+918602414046').replace(/[^0-9]/g, '');
   const whatsappPreFilled = encodeURIComponent(
     `Hello JSArt&Decor Team! I just submitted an Art & Decor Plan on your website.\n\n` +
     `• Ref ID: ${submittedRef}\n` +
@@ -611,7 +611,7 @@ export const ArtDecorPlannerModal: React.FC<ArtDecorPlannerModalProps> = ({
                       <input
                         type="tel"
                         required
-                        placeholder="+91 98765 43210"
+                        placeholder="+91 86024 14046"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         className="w-full bg-[#171717] border border-neutral-800 focus:border-[#D4A017] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white focus:outline-none"

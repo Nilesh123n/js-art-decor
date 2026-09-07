@@ -497,9 +497,9 @@ export const INITIAL_PARTNERS: Partner[] = [
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   store_name: 'JSArt&Decor',
   logo_path: '/uploads/logo.png', // Clear logo placeholder configuration
-  contact_phone: '+91 98765 43210',
-  whatsapp_number: '+91 98765 43210',
-  contact_email: 'info@jsartdecor.com',
+  contact_phone: '+91 86024 14046',
+  whatsapp_number: '+91 86024 14046',
+  contact_email: 'info.jsartanddecor@gmail.com',
   address: 'JSArt&Decor Textile & Art Hub, Phase II Industrial Estate, Jaipur, Rajasthan 302022, India',
   razorpay_key_id: '',
   enable_cod: false,
@@ -643,7 +643,7 @@ export const INITIAL_ORDERS: any[] = [
     orderNumber: 'JSA-842910',
     customer: {
       fullName: 'Nilesh Nigam',
-      mobileNumber: '+91 98765 43210',
+      mobileNumber: '+91 86024 14046',
       email: 'nileshnigam551@gmail.com',
       address: 'Plot 42, Civil Lines, Near Raj Mandir Cinema',
       city: 'Jaipur',

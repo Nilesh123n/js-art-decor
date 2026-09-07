@@ -119,67 +119,120 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
 
       {modalOpen && editingBlog && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white text-neutral-900 rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200">
             <div className="flex items-center justify-between border-b pb-3">
-              <h2 className="font-bold text-neutral-900">Blog Article Editor</h2>
-              <button onClick={() => setModalOpen(false)}><X className="w-5 h-5 text-neutral-400" /></button>
+              <div>
+                <h2 className="font-bold text-neutral-900 text-base">
+                  {editingBlog.id ? 'Edit Blog Article' : 'New Blog Article'}
+                </h2>
+                <p className="text-[11px] text-neutral-500">
+                  Fill in article details to publish to the store blog.
+                </p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setModalOpen(false)}
+                className="p-1 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-3 text-xs">
+            <form onSubmit={handleSave} className="space-y-3.5 text-xs text-neutral-900">
               <div>
-                <label className="block font-bold text-neutral-700 mb-1">Article Title *</label>
+                <label className="block font-bold text-neutral-800 mb-1">Article Title *</label>
                 <input
                   type="text"
                   required
-                  value={editingBlog.title || ''}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, title: e.target.value })}
-                  className="w-full bg-neutral-50 border border-neutral-300 rounded p-2"
+                  placeholder="e.g. 5 Secrets to Choosing Luxury 400 TC Bedding"
+                  value={editingBlog.title ?? ''}
+                  onChange={(e) => setEditingBlog(prev => prev ? { ...prev, title: e.target.value } : null)}
+                  className="w-full bg-white text-neutral-900 border border-neutral-300 rounded-lg p-2.5 font-medium placeholder:text-neutral-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-neutral-800 mb-1">Category</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Textile Guide, Decor Tips"
+                    value={editingBlog.category ?? ''}
+                    onChange={(e) => setEditingBlog(prev => prev ? { ...prev, category: e.target.value } : null)}
+                    className="w-full bg-white text-neutral-900 border border-neutral-300 rounded-lg p-2.5 placeholder:text-neutral-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-neutral-800 mb-1">Author Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. JSArt&Decor Editorial"
+                    value={editingBlog.author ?? ''}
+                    onChange={(e) => setEditingBlog(prev => prev ? { ...prev, author: e.target.value } : null)}
+                    className="w-full bg-white text-neutral-900 border border-neutral-300 rounded-lg p-2.5 placeholder:text-neutral-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block font-bold text-neutral-700 mb-1">Category</label>
+                <label className="block font-bold text-neutral-800 mb-1">Featured Image URL</label>
                 <input
                   type="text"
-                  value={editingBlog.category || ''}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, category: e.target.value })}
-                  className="w-full bg-neutral-50 border border-neutral-300 rounded p-2"
+                  placeholder="https://images.unsplash.com/..."
+                  value={editingBlog.featured_image ?? ''}
+                  onChange={(e) => setEditingBlog(prev => prev ? { ...prev, featured_image: e.target.value } : null)}
+                  className="w-full bg-white text-neutral-900 border border-neutral-300 rounded-lg p-2.5 font-mono text-[11px] placeholder:text-neutral-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 />
+                {editingBlog.featured_image && (
+                  <div className="mt-2 relative h-28 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-100">
+                    <img
+                      src={editingBlog.featured_image}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
-                <label className="block font-bold text-neutral-700 mb-1">Featured Image URL</label>
-                <input
-                  type="text"
-                  value={editingBlog.featured_image || ''}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, featured_image: e.target.value })}
-                  className="w-full bg-neutral-50 border border-neutral-300 rounded p-2 font-mono text-[11px]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-neutral-700 mb-1">Short Summary</label>
+                <label className="block font-bold text-neutral-800 mb-1">Short Summary</label>
                 <textarea
                   rows={2}
-                  value={editingBlog.short_description || ''}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, short_description: e.target.value })}
-                  className="w-full bg-neutral-50 border border-neutral-300 rounded p-2"
+                  placeholder="Brief synopsis shown on blog listing cards..."
+                  value={editingBlog.short_description ?? ''}
+                  onChange={(e) => setEditingBlog(prev => prev ? { ...prev, short_description: e.target.value } : null)}
+                  className="w-full bg-white text-neutral-900 border border-neutral-300 rounded-lg p-2.5 placeholder:text-neutral-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-neutral-700 mb-1">Full Content Body</label>
+                <label className="block font-bold text-neutral-800 mb-1">Full Content Body</label>
                 <textarea
                   rows={6}
-                  value={editingBlog.full_content || ''}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, full_content: e.target.value })}
-                  className="w-full bg-neutral-50 border border-neutral-300 rounded p-2 font-mono text-[11px]"
+                  placeholder="Full article content and markdown..."
+                  value={editingBlog.full_content ?? ''}
+                  onChange={(e) => setEditingBlog(prev => prev ? { ...prev, full_content: e.target.value } : null)}
+                  className="w-full bg-white text-neutral-900 border border-neutral-300 rounded-lg p-2.5 placeholder:text-neutral-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none leading-relaxed"
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t">
-                <button type="button" onClick={() => setModalOpen(false)} className="px-3 py-1.5 border rounded">Cancel</button>
-                <button type="submit" disabled={submitting} className="px-5 py-1.5 bg-neutral-900 text-white rounded font-bold flex items-center gap-1.5 disabled:opacity-50">
+              <div className="pt-3 flex justify-end gap-2 border-t">
+                <button 
+                  type="button" 
+                  onClick={() => setModalOpen(false)} 
+                  className="px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 hover:bg-neutral-100 transition font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={submitting} 
+                  className="px-5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg font-bold flex items-center gap-1.5 transition disabled:opacity-50"
+                >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Save Article</span>
                 </button>

@@ -23,7 +23,7 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({ orderId, set
 
   const whatsappPhone = settings?.whatsapp_number
     ? settings.whatsapp_number.replace(/[^0-9]/g, '')
-    : '919829012345';
+    : '918602414046';
 
   return (
     <div id="order-success-view" className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-6 min-h-screen text-white">

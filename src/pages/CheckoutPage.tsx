@@ -257,7 +257,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   type="tel"
                   name="mobileNumber"
                   required
-                  placeholder="e.g. +91 98765 43210"
+                  placeholder="e.g. +91 86024 14046"
                   value={customer.mobileNumber}
                   onChange={handleInputChange}
                   className="w-full bg-[#141414] border border-[#D4A017]/50 rounded-lg p-2.5 text-white placeholder-[#666666] focus:bg-[#1A1A1A] focus:outline-none focus:border-[#D4A017]"
