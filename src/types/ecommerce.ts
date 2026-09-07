@@ -168,6 +168,7 @@ export interface ContactMessage {
   mobile: string;
   enquiry_type?: string;
   subject: string;
+  city?: string;
   message: string;
   is_read: boolean;
   created_at: string;

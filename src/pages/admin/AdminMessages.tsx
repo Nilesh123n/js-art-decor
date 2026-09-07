@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MessageSquare, CheckCircle2, Circle, Trash2, Search, ExternalLink, Loader2, Clock, AlertCircle } from 'lucide-react';
+import {
+  Mail,
+  Phone,
+  MessageSquare,
+  CheckCircle2,
+  Circle,
+  Trash2,
+  Search,
+  ExternalLink,
+  Loader2,
+  Clock,
+  AlertCircle,
+  FileSpreadsheet,
+  FileText
+} from 'lucide-react';
 import { ContactMessage } from '../../types/ecommerce';
 import { ApiService } from '../../services/api';
+import { exportEnquiriesToExcel, exportEnquiriesToPDF } from '../../utils/exportUtils';
 
 export const AdminMessages: React.FC = () => {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
@@ -81,10 +96,32 @@ export const AdminMessages: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="px-3 py-1.5 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl font-bold">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl font-bold">
             {messages.filter((m) => !m.is_read).length} Unread Leads
           </span>
+
+          <button
+            type="button"
+            id="export-enquiries-excel-btn"
+            onClick={() => exportEnquiriesToExcel(filtered.length > 0 ? filtered : messages)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100/80 font-semibold rounded-xl shadow-xs transition cursor-pointer"
+            title="Export enquiries to Excel (.xlsx)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Export Excel</span>
+          </button>
+
+          <button
+            type="button"
+            id="export-enquiries-pdf-btn"
+            onClick={() => exportEnquiriesToPDF(filtered.length > 0 ? filtered : messages)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100/80 font-semibold rounded-xl shadow-xs transition cursor-pointer"
+            title="Export enquiries report to PDF (.pdf)"
+          >
+            <FileText className="w-4 h-4 text-rose-600" />
+            <span>Export PDF</span>
+          </button>
         </div>
       </div>
 

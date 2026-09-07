@@ -12,10 +12,13 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
-  Info
+  Info,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { Order, OrderStatus, PaymentStatus } from '../../types/ecommerce';
 import { ApiService } from '../../services/api';
+import { exportOrdersToExcel, exportOrdersToPDF } from '../../utils/exportUtils';
 
 interface AdminOrdersProps {
   orders: Order[];
@@ -271,6 +274,30 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ orders, onRefreshOrder
           <p className="text-xs text-neutral-500">
             Track fulfillment lifecycle, manage shipping logistics, and automatically trigger customer email notifications on dispatch.
           </p>
+        </div>
+
+        {/* Export Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            id="export-orders-excel-btn"
+            onClick={() => exportOrdersToExcel(filteredOrders.length > 0 ? filteredOrders : orders)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100/80 font-semibold text-xs rounded-xl shadow-xs transition cursor-pointer"
+            title="Export filtered orders to Excel (.xlsx)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Export Excel</span>
+          </button>
+          <button
+            type="button"
+            id="export-orders-pdf-btn"
+            onClick={() => exportOrdersToPDF(filteredOrders.length > 0 ? filteredOrders : orders)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100/80 font-semibold text-xs rounded-xl shadow-xs transition cursor-pointer"
+            title="Export orders summary report to PDF (.pdf)"
+          >
+            <FileText className="w-4 h-4 text-rose-600" />
+            <span>Export PDF</span>
+          </button>
         </div>
       </div>
 
