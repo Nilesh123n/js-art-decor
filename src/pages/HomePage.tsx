@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, ChevronLeft, ChevronRight, Award, Shield, Truck, RotateCcw, Headphones, Crown, Medal, Star, Gem, Layers } from 'lucide-react';
+import { 
+  ArrowRight, Sparkles, ChevronLeft, ChevronRight, Award, Shield, Truck, RotateCcw, 
+  Headphones, Layers, Tag, Percent, Gift, Copy, Check, Flame, Clock, BadgePercent 
+} from 'lucide-react';
 import { Product, Blog, Partner, SiteSettings, Banner, PageSection } from '../types/ecommerce';
+import { INITIAL_PRODUCTS } from '../data/mockData';
 import { ProductCarousel } from '../components/common/ProductCarousel';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { ApiService } from '../services/api';
@@ -38,10 +42,34 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [dbSections, setDbSections] = useState<PageSection[]>([]);
   const [plannerModalOpen, setPlannerModalOpen] = useState<boolean>(false);
   const [plannerInitialSegment, setPlannerInitialSegment] = useState<PlannerSegment>('Home');
+  const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
+  const [activeOfferTicker, setActiveOfferTicker] = useState(0);
 
   const handleOpenPlanner = (segment: PlannerSegment) => {
     setPlannerInitialSegment(segment);
     setPlannerModalOpen(true);
+  };
+
+  const handleCopyCoupon = (code: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code);
+      } else {
+        const el = document.createElement('textarea');
+        el.value = code;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+    } catch {
+      // Fallback
+    }
+    setCopiedCoupon(code);
+    setTimeout(() => {
+      setCopiedCoupon(null);
+    }, 2500);
   };
 
   useEffect(() => {
@@ -115,6 +143,32 @@ export const HomePage: React.FC<HomePageProps> = ({
   }, [heroSlides.length]);
 
   const currentSlide = heroSlides[heroSlide];
+
+  // 20% OFF Deal Products (Curated for the Golden Offer Bar)
+  const dealProducts = (products && products.length > 0)
+    ? products.slice(0, 6)
+    : INITIAL_PRODUCTS.slice(0, 6);
+
+  const [activeDealIndex, setActiveDealIndex] = useState(0);
+
+  // Auto rotate 20% OFF featured deal every 6 seconds
+  useEffect(() => {
+    if (dealProducts.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveDealIndex((prev) => (prev + 1) % dealProducts.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [dealProducts.length]);
+
+  const currentDealProduct = dealProducts[activeDealIndex] || dealProducts[0] || INITIAL_PRODUCTS[0];
+  const dealOriginalPrice = currentDealProduct.retail_price || 2499;
+  const dealDiscountedPrice = Math.round(dealOriginalPrice * 0.8); // 20% OFF
+  const dealSavings = dealOriginalPrice - dealDiscountedPrice;
+  const dealOneLineDetail = currentDealProduct.short_description || 
+    (currentDealProduct.description ? `${currentDealProduct.description.slice(0, 95)}...` : '') || 
+    `${currentDealProduct.material || '100% Pure Organic Cotton'} • ${currentDealProduct.size || 'King Size'} • Authentic Jaipur Handblock`;
+
+  const activePromoBanners = dbBanners.filter((b) => b.banner_type === 'promo' && b.is_active);
 
   const handleNextHero = () => {
     setHeroSlide((prev) => (prev + 1) % heroSlides.length);
@@ -233,50 +287,121 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* -------------------------------------------------- */}
-      {/* 2. WHOLESALE HIERARCHY BANNER (#000000) */}
+      {/* 2. GOLDEN OFFER BAR (20% OFF • ONE-LINE DETAIL • PRODUCT IMAGE • BUY NOW) */}
       {/* -------------------------------------------------- */}
-      <section className="bg-[#000000] text-white py-6 border-b border-[#D4A017]/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 border border-[#D4A017] rounded-lg p-4 bg-[#0A0A0A] text-center divide-y md:divide-y-0 md:divide-x divide-[#222222] shadow-[0_0_15px_rgba(212,160,23,0.15)]">
-            {/* Col 1 */}
-            <div className="p-2 space-y-1 flex flex-col items-center justify-center">
-              <Crown className="w-5 h-5 text-[#D4A017]" />
-              <div className="text-xs font-bold text-[#D4A017] tracking-wider uppercase">WHOLESALE HIERARCHY</div>
-              <div className="text-[10px] text-[#A3A3A3]">BETTER LEVEL<br />BETTER BENEFITS</div>
+      <section 
+        id="golden-offer-bar" 
+        className="w-full bg-gradient-to-r from-[#D4A017] via-[#F3E5AB] to-[#D4A017] border-y-2 border-[#D4A017] text-black py-4 sm:py-6 px-4 sm:px-6 shadow-[0_10px_35px_rgba(212,160,23,0.45)] relative z-20"
+      >
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8">
+          
+          {/* Left / Middle: 20% OFF Badge, Headline, 1-Line Product Detail & Pricing */}
+          <div className="flex-1 min-w-0 w-full text-left space-y-2">
+            {/* Top Row: 20% OFF Badge & Special Promotion Pill */}
+            <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black text-[#D4A017] font-black text-xs sm:text-sm tracking-wider uppercase shadow-md shrink-0">
+                <Flame className="w-4 h-4 fill-[#D4A017] text-[#D4A017] animate-pulse" />
+                <span>FLAT 20% OFF</span>
+              </span>
+              <span className="text-[11px] sm:text-xs font-black tracking-widest text-black/90 uppercase bg-black/10 px-2.5 py-0.5 rounded-md border border-black/25">
+                FESTIVE SPECIAL DEAL
+              </span>
+              {dealProducts.length > 1 && (
+                <span className="text-[11px] font-mono font-bold text-black/80 hidden sm:inline-block">
+                  Offer {activeDealIndex + 1} of {dealProducts.length}
+                </span>
+              )}
             </div>
 
-            {/* Col 2 */}
-            <div className="p-2 space-y-1 flex flex-col items-center justify-center">
-              <Medal className="w-5 h-5 text-slate-300" />
-              <div className="text-xs font-bold text-slate-200">SILVER</div>
-              <div className="text-xs font-serif text-white font-semibold">5L - 20L</div>
-              <div className="text-[10px] text-[#D4A017] font-bold">2% - 5% OFF</div>
+            {/* Product Name & One-Line Product Detail */}
+            <div 
+              onClick={() => onSelectProduct(currentDealProduct)}
+              className="cursor-pointer group"
+              title={`Click to view ${currentDealProduct.name}`}
+            >
+              <h3 className="text-base sm:text-lg md:text-xl font-serif font-black text-black tracking-tight leading-snug group-hover:underline flex items-center gap-2">
+                <span className="truncate">{currentDealProduct.name}</span>
+                <span className="text-xs font-sans font-black bg-black text-[#D4A017] px-2 py-0.5 rounded shrink-0">
+                  20% OFF
+                </span>
+              </h3>
+              <p className="text-xs sm:text-sm font-semibold text-black/90 truncate mt-0.5 leading-relaxed">
+                {dealOneLineDetail}
+              </p>
             </div>
 
-            {/* Col 3 */}
-            <div className="p-2 space-y-1 flex flex-col items-center justify-center">
-              <Medal className="w-5 h-5 text-[#D4A017]" />
-              <div className="text-xs font-bold text-[#D4A017]">GOLD</div>
-              <div className="text-xs font-serif text-white font-semibold">20L - 50L</div>
-              <div className="text-[10px] text-[#D4A017] font-bold">5% - 10% OFF</div>
-            </div>
-
-            {/* Col 4 */}
-            <div className="p-2 space-y-1 flex flex-col items-center justify-center">
-              <Star className="w-5 h-5 text-amber-200" />
-              <div className="text-xs font-bold text-amber-200">PLATINUM</div>
-              <div className="text-xs font-serif text-white font-semibold">50L - 1CR</div>
-              <div className="text-[10px] text-[#D4A017] font-bold">10% - 15% OFF</div>
-            </div>
-
-            {/* Col 5 */}
-            <div className="p-2 space-y-1 flex flex-col items-center justify-center col-span-2 md:col-span-1">
-              <Gem className="w-5 h-5 text-amber-400" />
-              <div className="text-xs font-bold text-amber-300">DIAMOND</div>
-              <div className="text-xs font-serif text-white font-semibold">1CR+</div>
-              <div className="text-[10px] text-[#D4A017] font-bold">15%+ OFF</div>
+            {/* Price & Savings Tag */}
+            <div className="flex items-center flex-wrap gap-2 sm:gap-3 pt-0.5">
+              <span className="text-base sm:text-xl font-black text-black font-sans">
+                ₹{dealDiscountedPrice.toLocaleString('en-IN')}
+              </span>
+              <span className="line-through text-black/60 text-xs sm:text-sm font-bold">
+                MRP ₹{dealOriginalPrice.toLocaleString('en-IN')}
+              </span>
+              <span className="bg-black text-[#D4A017] text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded tracking-wider uppercase shadow-xs">
+                SAVE ₹{dealSavings.toLocaleString('en-IN')} (20% OFF)
+              </span>
+              <span className="text-[11px] font-bold text-black/80 hidden md:inline-block">
+                • Auto-Applied or Use Coupon: <strong className="font-mono underline">FESTIVE20</strong>
+              </span>
             </div>
           </div>
+
+          {/* Right Side: Enlarged Clear Product Image + BUY NOW Button + Switcher */}
+          <div className="flex flex-row items-center justify-between sm:justify-end gap-3 sm:gap-5 w-full md:w-auto shrink-0 border-t md:border-t-0 border-black/15 pt-3 md:pt-0">
+            
+            {/* Enlarged Crisp Product Image for Clear Visibility */}
+            <div 
+              onClick={() => onSelectProduct(currentDealProduct)}
+              className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden border-2 border-black/50 shadow-xl shrink-0 cursor-pointer bg-black/10 group transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              title={`View ${currentDealProduct.name}`}
+            >
+              <img
+                src={currentDealProduct.images?.[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'}
+                alt={currentDealProduct.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <span className="absolute bottom-0 inset-x-0 bg-black/90 text-[#D4A017] text-[10px] font-black text-center py-0.5 tracking-wider">
+                -20% OFF
+              </span>
+            </div>
+
+            {/* Actions: BUY NOW Button + Deal Switcher Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                id="buy-now-offer-btn"
+                type="button"
+                onClick={() => onSelectProduct(currentDealProduct)}
+                className="bg-black hover:bg-neutral-900 text-[#D4A017] hover:text-white font-serif font-black text-xs sm:text-sm px-6 sm:px-8 py-3.5 rounded-xl uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl hover:shadow-black/50 transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap group"
+              >
+                <span>BUY NOW</span>
+                <ArrowRight className="w-4 h-4 text-[#D4A017] group-hover:text-white group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {dealProducts.length > 1 && (
+                <div className="flex flex-col gap-1 shrink-0">
+                  <button
+                    onClick={() => setActiveDealIndex((prev) => (prev - 1 + dealProducts.length) % dealProducts.length)}
+                    className="w-7 h-7 rounded-lg bg-black/20 hover:bg-black text-black hover:text-[#D4A017] flex items-center justify-center transition cursor-pointer"
+                    title="Previous Deal"
+                    aria-label="Previous Deal"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setActiveDealIndex((prev) => (prev + 1) % dealProducts.length)}
+                    className="w-7 h-7 rounded-lg bg-black/20 hover:bg-black text-black hover:text-[#D4A017] flex items-center justify-center transition cursor-pointer"
+                    title="Next Deal"
+                    aria-label="Next Deal"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+
         </div>
       </section>
 
