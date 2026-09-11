@@ -1005,36 +1005,63 @@ async function startServer() {
     }
 
     if (req.method === "POST") {
-      const body = req.body;
+      const body = req.body || {};
+
+      // Handle batch save from admin: { blogs: Blog[] }
+      if (Array.isArray(body.blogs)) {
+        blogsDb = body.blogs;
+        return res.json({ success: true, message: "Blogs updated successfully.", data: blogsDb });
+      }
+
+      // Handle single blog creation
+      const title = String(body.title || "").trim();
+      if (!title) {
+        return res.status(400).json({ success: false, error: "Blog title is required." });
+      }
+
       const newId = blogsDb.length > 0 ? Math.max(...blogsDb.map((b) => b.id)) + 1 : 1;
+      const slug = (body.slug || title)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
+
       const newBlog = {
-        id: newId,
-        title: body.title,
-        slug: body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        id: body.id || newId,
+        title: title,
+        slug: slug,
         featured_image: body.featured_image || body.cover_image || "",
         short_description: body.short_description || body.excerpt || "",
         full_content: body.full_content || body.content || "",
         category: body.category || "General",
         author: body.author || "JSArt&Decor Team",
         status: body.status || (body.is_published ? "Published" : "Draft"),
-        created_at: new Date().toISOString()
+        created_at: body.created_at || new Date().toISOString()
       };
 
       blogsDb.unshift(newBlog);
-      return res.json({ success: true, id: newId, message: "Blog created." });
+      return res.json({ success: true, id: newId, message: "Blog created.", data: newBlog });
     }
 
     if (req.method === "PUT") {
-      const body = req.body;
+      const body = req.body || {};
       const idx = blogsDb.findIndex((b) => b.id === body.id);
       if (idx === -1) return res.status(404).json({ success: false, error: "Blog not found." });
 
-      blogsDb[idx] = { ...blogsDb[idx], ...body };
-      return res.json({ success: true, message: "Blog updated." });
+      const updatedTitle = String(body.title !== undefined ? body.title : blogsDb[idx].title).trim();
+      const updatedSlug = body.slug || (updatedTitle ? updatedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") : blogsDb[idx].slug);
+
+      blogsDb[idx] = { 
+        ...blogsDb[idx], 
+        ...body,
+        title: updatedTitle,
+        slug: updatedSlug,
+        updated_at: new Date().toISOString()
+      };
+      return res.json({ success: true, message: "Blog updated.", data: blogsDb[idx] });
     }
 
     if (req.method === "DELETE") {
-      const { id } = req.body;
+      const { id } = req.body || {};
       blogsDb = blogsDb.filter((b) => b.id !== id);
       return res.json({ success: true, message: "Blog deleted." });
     }
@@ -1049,24 +1076,31 @@ async function startServer() {
     }
 
     if (req.method === "POST") {
-      const body = req.body;
+      const body = req.body || {};
+
+      // Handle batch save from admin: { partners: Partner[] }
+      if (Array.isArray(body.partners)) {
+        partnersDb = body.partners;
+        return res.json({ success: true, message: "Partners updated successfully.", data: partnersDb });
+      }
+
       const newId = partnersDb.length > 0 ? Math.max(...partnersDb.map((p) => p.id)) + 1 : 1;
       const newPartner = {
-        id: newId,
-        name: body.name,
+        id: body.id || newId,
+        name: String(body.name || "Partner"),
         logo_url: body.logo_url || "",
         description: body.description || "",
         website: body.website || "",
-        display_order: body.display_order || 1,
+        display_order: Number(body.display_order) || 1,
         is_active: body.is_active !== undefined ? !!body.is_active : true
       };
 
       partnersDb.push(newPartner);
-      return res.json({ success: true, id: newId, message: "Partner added." });
+      return res.json({ success: true, id: newId, message: "Partner added.", data: newPartner });
     }
 
     if (req.method === "PUT") {
-      const body = req.body;
+      const body = req.body || {};
       const idx = partnersDb.findIndex((p) => p.id === body.id);
       if (idx === -1) return res.status(404).json({ success: false, error: "Partner not found." });
 
@@ -1075,7 +1109,7 @@ async function startServer() {
     }
 
     if (req.method === "DELETE") {
-      const { id } = req.body;
+      const { id } = req.body || {};
       partnersDb = partnersDb.filter((p) => p.id !== id);
       return res.json({ success: true, message: "Partner removed." });
     }
@@ -1174,6 +1208,60 @@ async function startServer() {
     } catch (err: any) {
       console.error("[Logo Upload] Error:", err);
       return res.status(500).json({ success: false, error: err?.message || "Failed to upload logo." });
+    }
+  });
+
+  // Admin General Image Upload (Blogs, Products, Banners, etc.)
+  app.post(["/api/admin/upload_image.php", "/api/admin/upload_image", "/api/upload/image"], async (req, res) => {
+    try {
+      const { image_data, file, fileName } = req.body || {};
+      const payload = image_data || file;
+      let finalUrl = "";
+
+      if (payload && typeof payload === "string" && payload.startsWith("data:image/")) {
+        const matches = payload.match(/^data:image\/([a-zA-Z0-9\+\-]+);base64,(.+)$/);
+        if (matches) {
+          let ext = matches[1].toLowerCase();
+          if (ext === "svg+xml") ext = "svg";
+          if (!["jpg", "jpeg", "png", "webp", "svg", "gif"].includes(ext)) {
+            ext = "jpg";
+          }
+          const buffer = Buffer.from(matches[2], "base64");
+          const uploadsDir = path.join(process.cwd(), "uploads");
+          const publicUploadsDir = path.join(process.cwd(), "public", "uploads");
+
+          if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+          if (!fs.existsSync(publicUploadsDir)) fs.mkdirSync(publicUploadsDir, { recursive: true });
+
+          const safeName = (fileName || "blog_img").replace(/[^a-zA-Z0-9_-]/g, "");
+          const safeFileName = `img_${Date.now()}_${safeName.substring(0, 30)}.${ext}`;
+          const filePath = path.join(uploadsDir, safeFileName);
+          const publicFilePath = path.join(publicUploadsDir, safeFileName);
+
+          fs.writeFileSync(filePath, buffer);
+          try {
+            fs.writeFileSync(publicFilePath, buffer);
+          } catch {}
+
+          finalUrl = `/uploads/${safeFileName}`;
+        }
+      } else if (payload && typeof payload === "string" && (payload.startsWith("http://") || payload.startsWith("https://"))) {
+        finalUrl = payload.trim();
+      }
+
+      if (!finalUrl) {
+        return res.status(400).json({ success: false, error: "No valid image data or URL provided." });
+      }
+
+      return res.json({
+        success: true,
+        url: finalUrl,
+        image_url: finalUrl,
+        message: "Image uploaded successfully."
+      });
+    } catch (err: any) {
+      console.error("[General Image Upload] Error:", err);
+      return res.status(500).json({ success: false, error: err?.message || "Failed to upload image." });
     }
   });
 

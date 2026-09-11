@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, User, Calendar, Tag, BookOpen, X } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Tag, BookOpen, X, Sparkles } from 'lucide-react';
 import { Blog } from '../types/ecommerce';
+import { FormattedBlogContent } from '../components/blog/FormattedBlogContent';
+import { ImageWithFallback } from '../components/common/ImageWithFallback';
 
 interface BlogPageProps {
   blogs: Blog[];
@@ -27,7 +29,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ blogs, initialBlogId, onNavi
 
       {/* Active Blog Full Reader View */}
       {activeBlog ? (
-        <div className="bg-[#0A0A0A] p-6 sm:p-10 rounded-2xl border border-[#D4A017] shadow-[0_0_20px_rgba(212,160,23,0.2)] space-y-6 max-w-4xl mx-auto">
+        <div className="bg-[#0A0A0A] p-6 sm:p-10 rounded-2xl border border-[#D4A017] shadow-[0_0_20px_rgba(212,160,23,0.2)] space-y-8 max-w-4xl mx-auto">
           <button
             onClick={() => setActiveBlog(null)}
             className="text-xs font-semibold text-[#D4A017] hover:text-[#E5B842] flex items-center gap-1.5 transition"
@@ -53,17 +55,30 @@ export const BlogPage: React.FC<BlogPageProps> = ({ blogs, initialBlogId, onNavi
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
-                {activeBlog.created_at.substring(0, 10)}
+                {(activeBlog.created_at || '').substring(0, 10) || 'Recent'}
               </span>
             </div>
           </div>
 
-          <div className="aspect-[16/9] rounded-xl overflow-hidden bg-[#141414] border-2 border-[#D4A017] shadow-[0_0_15px_rgba(212,160,23,0.2)]">
-            <img src={activeBlog.featured_image} alt={activeBlog.title} className="w-full h-full object-cover" />
+          {/* Featured Image with 16:9 Aspect Ratio and proper fit */}
+          <div className="aspect-[16/9] w-full rounded-xl overflow-hidden bg-[#141414] border-2 border-[#D4A017] shadow-[0_0_15px_rgba(212,160,23,0.2)]">
+            <ImageWithFallback 
+              src={activeBlog.featured_image} 
+              alt={activeBlog.title} 
+              className="w-full h-full object-cover object-center" 
+            />
           </div>
 
-          <div className="prose prose-neutral max-w-none text-xs sm:text-sm text-[#E0E0E0] leading-relaxed space-y-4 whitespace-pre-line font-light">
-            {activeBlog.full_content}
+          {/* Short description / Lead highlight */}
+          {activeBlog.short_description && (
+            <div className="p-4 rounded-xl bg-[#141414] border-l-4 border-[#D4A017] text-sm text-[#F3E5AB] font-medium leading-relaxed">
+              {activeBlog.short_description}
+            </div>
+          )}
+
+          {/* Formatted Full Content with Bold Text, Paragraphs, Line Breaks, and Headings */}
+          <div className="pt-2">
+            <FormattedBlogContent content={activeBlog.full_content} />
           </div>
         </div>
       ) : (
@@ -76,8 +91,12 @@ export const BlogPage: React.FC<BlogPageProps> = ({ blogs, initialBlogId, onNavi
               className="group bg-[#0A0A0A] rounded-xl border border-[#D4A017] overflow-hidden cursor-pointer hover:shadow-[0_0_20px_rgba(212,160,23,0.35)] transition shadow-[0_0_10px_rgba(212,160,23,0.1)] flex flex-col justify-between"
             >
               <div>
-                <div className="aspect-[16/9] overflow-hidden bg-[#141414] border-b border-[#D4A017]">
-                  <img src={blog.featured_image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="aspect-[16/9] w-full overflow-hidden bg-[#141414] border-b border-[#D4A017]">
+                  <ImageWithFallback 
+                    src={blog.featured_image} 
+                    alt={blog.title} 
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" 
+                  />
                 </div>
 
                 <div className="p-5 space-y-2">

@@ -391,6 +391,40 @@ export const ApiService = {
     return json.image_url;
   },
 
+  async uploadImage(fileOrBase64: File | string, fileName?: string): Promise<string> {
+    try {
+      let base64 = '';
+      let name = fileName || 'image';
+      if (fileOrBase64 instanceof File) {
+        name = fileOrBase64.name;
+        base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(fileOrBase64);
+        });
+      } else {
+        base64 = fileOrBase64;
+      }
+
+      const url = `${API_BASE_URL}/admin/upload_image.php`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCsrfHeader()
+        },
+        body: JSON.stringify({ image_data: base64, fileName: name })
+      });
+      const json = await handleResponse<any>(res);
+      return json.image_url || json.url;
+    } catch (err) {
+      // Fallback to ImageKit or local storage endpoint
+      const ik = await this.uploadToImageKit(fileOrBase64, fileName);
+      return ik.url;
+    }
+  },
+
   // Admin Orders
   async getAdminOrders(): Promise<Order[]> {
     const url = `${API_BASE_URL}/admin/orders.php`;

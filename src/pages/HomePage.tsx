@@ -8,7 +8,11 @@ import { INITIAL_PRODUCTS } from '../data/mockData';
 import { ProductCarousel } from '../components/common/ProductCarousel';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { ApiService } from '../services/api';
-import { ArtDecorPlannerModal, PlannerSegment } from '../components/planner/ArtDecorPlannerModal';
+import type { PlannerSegment } from '../components/planner/ArtDecorPlannerModal';
+
+const ArtDecorPlannerModal = React.lazy(() => 
+  import('../components/planner/ArtDecorPlannerModal').then(m => ({ default: m.ArtDecorPlannerModal }))
+);
 
 import heroGold1 from '../assets/images/hero_gold_decor_1_1786612841855.jpg';
 import heroGold2 from '../assets/images/hero_gold_decor_2_1786612862864.jpg';
@@ -947,12 +951,16 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* Art & Decor Planner Studio Modal */}
-      <ArtDecorPlannerModal
-        isOpen={plannerModalOpen}
-        onClose={() => setPlannerModalOpen(false)}
-        initialSegment={plannerInitialSegment}
-        whatsappNumber={settings.whatsapp_number}
-      />
+      {plannerModalOpen && (
+        <React.Suspense fallback={null}>
+          <ArtDecorPlannerModal
+            isOpen={plannerModalOpen}
+            onClose={() => setPlannerModalOpen(false)}
+            initialSegment={plannerInitialSegment}
+            whatsappNumber={settings.whatsapp_number}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 };
