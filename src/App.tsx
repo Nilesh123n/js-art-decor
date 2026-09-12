@@ -95,7 +95,7 @@ export default function App() {
       if (Array.isArray(prodsRes) && prodsRes.length > 0) {
         setProducts(prodsRes);
       }
-      if (Array.isArray(blogsRes) && blogsRes.length > 0) {
+      if (Array.isArray(blogsRes)) {
         setBlogs(blogsRes);
       }
       if (Array.isArray(partnersRes) && partnersRes.length > 0) {

@@ -113,15 +113,27 @@ export const ApiService = {
   },
 
   async getBlogs(): Promise<Blog[]> {
-    const url = `${API_BASE_URL}/blogs/get.php`;
-    const res = await fetch(url);
+    const url = `${API_BASE_URL}/blogs/get.php?_t=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Blog[]>>(res);
     return json.data || [];
   },
 
   async getBlogBySlug(slug: string): Promise<Blog> {
-    const url = `${API_BASE_URL}/blogs/get.php?slug=${encodeURIComponent(slug)}`;
-    const res = await fetch(url);
+    const url = `${API_BASE_URL}/blogs/get.php?slug=${encodeURIComponent(slug)}&_t=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Blog>>(res);
     return json.data!;
   },
@@ -522,13 +534,20 @@ export const ApiService = {
 
   // Admin Blogs
   async getAdminBlogs(): Promise<Blog[]> {
-    const url = `${API_BASE_URL}/admin/blogs.php`;
-    const res = await fetch(url, { headers: getCsrfHeader() });
+    const url = `${API_BASE_URL}/admin/blogs.php?_t=${Date.now()}`;
+    const res = await fetch(url, { 
+      cache: 'no-store',
+      headers: {
+        ...getCsrfHeader(),
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Blog[]>>(res);
     return json.data || [];
   },
 
-  async saveAdminBlogs(blogs: Blog[]): Promise<void> {
+  async saveAdminBlogs(blogs: Blog[]): Promise<Blog[]> {
     const url = `${API_BASE_URL}/admin/blogs.php`;
     const res = await fetch(url, {
       method: 'POST',
@@ -538,7 +557,8 @@ export const ApiService = {
       },
       body: JSON.stringify({ blogs })
     });
-    await handleResponse<any>(res);
+    const json = await handleResponse<any>(res);
+    return json.data || blogs;
   },
 
   // Admin Partners

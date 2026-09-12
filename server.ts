@@ -9,7 +9,7 @@ import { INITIAL_PRODUCTS, INITIAL_BLOGS, INITIAL_PARTNERS, DEFAULT_SITE_SETTING
 import { sendOrderShippedEmail, generateShippingEmailHtml } from "./server/emailService";
 
 const app = express();
-const PORT = Number(process.env.NODE_ENV === "production" && process.env.PORT ? process.env.PORT : 3000);
+const PORT = 3000;
 
 async function startServer() {
   app.use(express.json({ limit: "10mb" }));
@@ -50,6 +50,7 @@ async function startServer() {
   let contactMessagesDb: any[] = [];
   let settingsDb = { ...DEFAULT_SITE_SETTINGS };
   const settingsStoreFile = path.join(process.cwd(), "database", "settings_store.json");
+  const blogsStoreFile = path.join(process.cwd(), "database", "blogs_store.json");
 
   // Load persistent settings from disk if available
   if (fs.existsSync(settingsStoreFile)) {
@@ -59,6 +60,28 @@ async function startServer() {
       console.log("[Settings] Loaded saved site settings from database/settings_store.json");
     } catch (e) {
       console.warn("[Settings] Could not parse settings_store.json", e);
+    }
+  }
+
+  // Load persistent blogs from disk if available
+  if (fs.existsSync(blogsStoreFile)) {
+    try {
+      const storedBlogs = JSON.parse(fs.readFileSync(blogsStoreFile, "utf-8"));
+      if (Array.isArray(storedBlogs) && storedBlogs.length > 0) {
+        blogsDb = storedBlogs;
+        console.log(`[Blogs] Loaded ${blogsDb.length} saved blogs from database/blogs_store.json`);
+      }
+    } catch (e) {
+      console.warn("[Blogs] Could not parse blogs_store.json", e);
+    }
+  } else {
+    try {
+      const dbDir = path.dirname(blogsStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(blogsStoreFile, JSON.stringify(blogsDb, null, 2), "utf-8");
+      console.log(`[Blogs] Initialized database/blogs_store.json with ${blogsDb.length} initial blogs`);
+    } catch (e) {
+      console.error("[Blogs] Failed to initialize blogs_store.json:", e);
     }
   }
 
@@ -88,7 +111,82 @@ async function startServer() {
     }
   };
 
-  // If MySQL is already available on startup, query settings
+  // Helper to persist blogs both to JSON disk store and to MySQL blogs table
+  const saveBlogsToDb = async (newBlogs: any[]) => {
+    blogsDb = [...newBlogs];
+
+    // 1. Write to database/blogs_store.json immediately so it survives restarts
+    try {
+      const dbDir = path.dirname(blogsStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(blogsStoreFile, JSON.stringify(blogsDb, null, 2), "utf-8");
+      console.log(`[Blogs] Saved ${blogsDb.length} blogs to disk (${blogsStoreFile})`);
+    } catch (e) {
+      console.error("[Blogs] Failed to write blogs_store.json:", e);
+    }
+
+    // 2. Synchronize with MySQL blogs table if MySQL connection is active
+    if (mysqlPool) {
+      try {
+        await mysqlPool.query(`
+          CREATE TABLE IF NOT EXISTS blogs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            slug VARCHAR(255) NOT NULL UNIQUE,
+            category VARCHAR(100) NOT NULL DEFAULT 'Textile Guide',
+            featured_image VARCHAR(500) NULL,
+            cover_image VARCHAR(500) NULL,
+            excerpt TEXT NULL,
+            short_description TEXT NULL,
+            content LONGTEXT NULL,
+            full_content LONGTEXT NULL,
+            author VARCHAR(100) DEFAULT 'JSArt&Decor Team',
+            status VARCHAR(20) DEFAULT 'Published',
+            is_published TINYINT(1) DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
+        for (const b of blogsDb) {
+          const isPublished = (String(b.status || "").toLowerCase() === "published" || (b as any).is_published == 1 || !(b.status)) ? 1 : 0;
+          await mysqlPool.query(
+            `INSERT INTO blogs (id, title, slug, category, featured_image, short_description, full_content, author, status, is_published, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+             title = VALUES(title),
+             slug = VALUES(slug),
+             category = VALUES(category),
+             featured_image = VALUES(featured_image),
+             short_description = VALUES(short_description),
+             full_content = VALUES(full_content),
+             author = VALUES(author),
+             status = VALUES(status),
+             is_published = VALUES(is_published),
+             updated_at = NOW()`,
+            [
+              b.id,
+              b.title,
+              b.slug,
+              b.category || "General",
+              b.featured_image || "",
+              b.short_description || "",
+              b.full_content || "",
+              b.author || "JSArt&Decor Editorial",
+              b.status || "Published",
+              isPublished,
+              b.created_at ? new Date(b.created_at) : new Date()
+            ]
+          );
+        }
+        console.log(`[Blogs] Synchronized ${blogsDb.length} blogs with MySQL database.`);
+      } catch (err: any) {
+        console.error("[Blogs] MySQL blogs sync failed:", err?.message || err);
+      }
+    }
+  };
+
+  // If MySQL is already available on startup, query settings and blogs
   if (mysqlPool) {
     try {
       const [rows]: any = await mysqlPool.query("SELECT setting_key, setting_value FROM settings");
@@ -101,13 +199,93 @@ async function startServer() {
     } catch (e) {
       console.warn("[Settings] Could not query initial MySQL settings:", e);
     }
+
+    try {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS blogs (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          slug VARCHAR(255) NOT NULL UNIQUE,
+          category VARCHAR(100) NOT NULL DEFAULT 'Textile Guide',
+          featured_image VARCHAR(500) NULL,
+          cover_image VARCHAR(500) NULL,
+          excerpt TEXT NULL,
+          short_description TEXT NULL,
+          content LONGTEXT NULL,
+          full_content LONGTEXT NULL,
+          author VARCHAR(100) DEFAULT 'JSArt&Decor Team',
+          status VARCHAR(20) DEFAULT 'Published',
+          is_published TINYINT(1) DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      const [blogRows]: any = await mysqlPool.query("SELECT * FROM blogs ORDER BY id DESC");
+      if (Array.isArray(blogRows) && blogRows.length > 0) {
+        blogsDb = blogRows.map((r: any) => ({
+          id: Number(r.id),
+          title: r.title || "",
+          slug: r.slug || "",
+          category: r.category || "General",
+          featured_image: r.featured_image || r.cover_image || "",
+          short_description: r.short_description || r.excerpt || "",
+          full_content: r.full_content || r.content || "",
+          author: r.author || "JSArt&Decor Editorial",
+          status: r.status || (r.is_published ? "Published" : "Draft"),
+          created_at: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString()
+        }));
+        console.log(`[Blogs] Loaded ${blogsDb.length} blogs from MySQL database.`);
+        try {
+          fs.writeFileSync(blogsStoreFile, JSON.stringify(blogsDb, null, 2), "utf-8");
+        } catch {}
+      } else {
+        // Seed MySQL with initial blogs from blogsDb
+        for (const b of blogsDb) {
+          const isPublished = (String(b.status || "").toLowerCase() === "published" || (b as any).is_published == 1 || !(b.status)) ? 1 : 0;
+          await mysqlPool.query(
+            `INSERT INTO blogs (id, title, slug, category, featured_image, short_description, full_content, author, status, is_published, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+             title = VALUES(title),
+             slug = VALUES(slug),
+             category = VALUES(category),
+             featured_image = VALUES(featured_image),
+             short_description = VALUES(short_description),
+             full_content = VALUES(full_content),
+             author = VALUES(author),
+             status = VALUES(status),
+             is_published = VALUES(is_published)`,
+            [
+              b.id,
+              b.title,
+              b.slug,
+              b.category || "General",
+              b.featured_image || "",
+              b.short_description || "",
+              b.full_content || "",
+              b.author || "JSArt&Decor Editorial",
+              b.status || "Published",
+              isPublished,
+              b.created_at ? new Date(b.created_at) : new Date()
+            ]
+          );
+        }
+        console.log(`[Blogs] Seeded ${blogsDb.length} initial blogs into MySQL database.`);
+      }
+    } catch (e: any) {
+      console.warn("[Blogs] MySQL blogs initialization check:", e?.message || e);
+    }
   }
 
   let activeAdminSessions = new Set<string>();
 
-  // Ensure all /api responses set application/json Content-Type header
+  // Ensure all /api responses set application/json and disable caching so all devices get fresh data
   app.use("/api", (req, res, next) => {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     next();
   });
 
@@ -214,17 +392,33 @@ async function startServer() {
 
   // Blogs List & Detail
   app.get(["/api/blogs/get.php", "/api/blogs/get"], (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     const { slug, id } = req.query;
 
+    const isPublished = (b: any) => {
+      const s = String(b.status || "").toLowerCase().trim();
+      return s === "published" || b.is_published == 1 || b.is_published === true || !b.status;
+    };
+
     if (slug || id) {
-      const blog = blogsDb.find((b) => (slug ? b.slug === slug : String(b.id) === String(id)) && b.status === "Published");
+      const blog = blogsDb.find((b) => (slug ? b.slug === slug : String(b.id) === String(id)) && isPublished(b));
       if (!blog) {
         return res.status(404).json({ success: false, error: "Article not found." });
       }
       return res.json({ success: true, data: blog });
     }
 
-    const published = blogsDb.filter((b) => b.status === "Published");
+    const published = blogsDb.filter(isPublished);
+    // Sort newest first by created_at or id
+    published.sort((a: any, b: any) => {
+      const timeA = new Date(a.created_at || 0).getTime();
+      const timeB = new Date(b.created_at || 0).getTime();
+      return (timeB - timeA) || (b.id - a.id);
+    });
+
     res.json({ success: true, data: published });
   });
 
@@ -999,9 +1193,18 @@ async function startServer() {
   });
 
   // Admin Blogs CRUD
-  app.all(["/api/admin/blogs.php", "/api/admin/blogs"], (req, res) => {
+  app.all(["/api/admin/blogs.php", "/api/admin/blogs"], async (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     if (req.method === "GET") {
-      return res.json({ success: true, data: blogsDb });
+      const sorted = [...blogsDb].sort((a: any, b: any) => {
+        const timeA = new Date(a.created_at || 0).getTime();
+        const timeB = new Date(b.created_at || 0).getTime();
+        return (timeB - timeA) || (b.id - a.id);
+      });
+      return res.json({ success: true, data: sorted });
     }
 
     if (req.method === "POST") {
@@ -1009,8 +1212,8 @@ async function startServer() {
 
       // Handle batch save from admin: { blogs: Blog[] }
       if (Array.isArray(body.blogs)) {
-        blogsDb = body.blogs;
-        return res.json({ success: true, message: "Blogs updated successfully.", data: blogsDb });
+        await saveBlogsToDb(body.blogs);
+        return res.json({ success: true, message: "Blogs updated and saved successfully.", data: blogsDb });
       }
 
       // Handle single blog creation
@@ -1033,13 +1236,14 @@ async function startServer() {
         short_description: body.short_description || body.excerpt || "",
         full_content: body.full_content || body.content || "",
         category: body.category || "General",
-        author: body.author || "JSArt&Decor Team",
-        status: body.status || (body.is_published ? "Published" : "Draft"),
+        author: body.author || "JSArt&Decor Editorial",
+        status: body.status || "Published",
         created_at: body.created_at || new Date().toISOString()
       };
 
-      blogsDb.unshift(newBlog);
-      return res.json({ success: true, id: newId, message: "Blog created.", data: newBlog });
+      const updatedBlogs = [newBlog, ...blogsDb.filter((b) => b.id !== newBlog.id)];
+      await saveBlogsToDb(updatedBlogs);
+      return res.json({ success: true, id: newId, message: "Blog created and saved successfully.", data: newBlog });
     }
 
     if (req.method === "PUT") {
@@ -1057,13 +1261,27 @@ async function startServer() {
         slug: updatedSlug,
         updated_at: new Date().toISOString()
       };
-      return res.json({ success: true, message: "Blog updated.", data: blogsDb[idx] });
+
+      await saveBlogsToDb(blogsDb);
+      return res.json({ success: true, message: "Blog updated and saved successfully.", data: blogsDb[idx] });
     }
 
     if (req.method === "DELETE") {
       const { id } = req.body || {};
-      blogsDb = blogsDb.filter((b) => b.id !== id);
-      return res.json({ success: true, message: "Blog deleted." });
+      const targetId = Number(id);
+      blogsDb = blogsDb.filter((b) => b.id !== targetId);
+
+      if (mysqlPool) {
+        try {
+          await mysqlPool.query("DELETE FROM blogs WHERE id = ?", [targetId]);
+          console.log(`[Blogs] Deleted blog ID ${targetId} from MySQL`);
+        } catch (e: any) {
+          console.warn("[Blogs] MySQL delete error:", e?.message || e);
+        }
+      }
+
+      await saveBlogsToDb(blogsDb);
+      return res.json({ success: true, message: "Blog deleted successfully." });
     }
 
     res.status(405).json({ success: false, error: "Method not allowed." });

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Plus, 
   Edit2, 
@@ -31,15 +31,42 @@ interface AdminBlogsProps {
 }
 
 export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs }) => {
+  const [blogList, setBlogList] = useState<Blog[]>(blogs || []);
+  const [loadingList, setLoadingList] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Partial<Blog> | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
   const [imageFit, setImageFit] = useState<'cover' | 'contain'>('cover');
+  const [successMsg, setSuccessMsg] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const fetchFreshBlogs = async () => {
+    setLoadingList(true);
+    try {
+      const data = await ApiService.getAdminBlogs();
+      if (Array.isArray(data)) {
+        setBlogList(data);
+      }
+    } catch (err) {
+      console.warn('Failed to load admin blogs:', err);
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFreshBlogs();
+  }, []);
+
+  useEffect(() => {
+    if (Array.isArray(blogs) && blogs.length > 0) {
+      setBlogList(blogs);
+    }
+  }, [blogs]);
 
   const handleOpenAdd = () => {
     setEditingBlog({
@@ -65,8 +92,12 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
   const handleDelete = async (id: number) => {
     if (confirm('Delete this blog post?')) {
       try {
-        await ApiService.saveAdminBlogs(blogs.filter(b => b.id !== id));
+        const updated = blogList.filter(b => b.id !== id);
+        const res = await ApiService.saveAdminBlogs(updated);
+        setBlogList(Array.isArray(res) ? res : updated);
         onRefreshBlogs();
+        setSuccessMsg('Blog deleted successfully from database.');
+        setTimeout(() => setSuccessMsg(''), 4000);
       } catch (err: any) {
         alert(err.message || 'Failed to delete blog.');
       }
@@ -139,7 +170,7 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)+/g, '');
 
-      const newId = editingBlog?.id || (blogs.length > 0 ? Math.max(...blogs.map(b => b.id)) + 1 : 1);
+      const newId = editingBlog?.id || (blogList.length > 0 ? Math.max(...blogList.map(b => b.id)) + 1 : 1);
       const blogToSave: Blog = {
         id: newId,
         title,
@@ -149,21 +180,24 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
         full_content: editingBlog?.full_content || '',
         category: editingBlog?.category || 'General',
         author: editingBlog?.author || 'JSArt&Decor Editorial',
-        status: editingBlog?.status || 'Published',
+        status: (editingBlog?.status as any) || 'Published',
         created_at: editingBlog?.created_at || new Date().toISOString()
       };
 
-      const idx = blogs.findIndex(b => b.id === blogToSave.id);
-      let updated = [...blogs];
+      const idx = blogList.findIndex(b => b.id === blogToSave.id);
+      let updated = [...blogList];
       if (idx > -1) {
         updated[idx] = blogToSave;
       } else {
         updated.unshift(blogToSave);
       }
 
-      await ApiService.saveAdminBlogs(updated);
+      const savedResult = await ApiService.saveAdminBlogs(updated);
+      setBlogList(Array.isArray(savedResult) ? savedResult : updated);
       onRefreshBlogs();
       setModalOpen(false);
+      setSuccessMsg('Blog article saved in database and live across all devices!');
+      setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err: any) {
       alert(err.message || 'Failed to save blog post.');
     } finally {
@@ -173,27 +207,48 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
 
   return (
     <div className="space-y-6">
+      {/* Success Notification */}
+      {successMsg && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl text-xs font-semibold flex items-center justify-between shadow-sm">
+          <span>✓ {successMsg}</span>
+          <button onClick={() => setSuccessMsg('')} className="text-emerald-600 hover:text-emerald-900">×</button>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-neutral-900">Blog Management</h1>
+          <h1 className="text-2xl font-serif font-bold text-neutral-900">
+            Blog Management <span className="text-sm font-normal text-neutral-400">({blogList.length})</span>
+          </h1>
           <p className="text-xs text-neutral-500 mt-0.5">
-            Publish textile guides, care instructions, and industry updates with rich formatting and custom image uploads.
+            Publish textile guides, care instructions, and industry updates with rich formatting, image upload, and multi-device persistence.
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition shadow-sm self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Blog Article</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchFreshBlogs}
+            disabled={loadingList}
+            className="border border-neutral-300 hover:bg-neutral-100 text-neutral-700 text-xs font-medium px-3 py-2.5 rounded-xl transition shadow-sm"
+            title="Reload from Database"
+          >
+            {loadingList ? 'Syncing...' : 'Sync from DB'}
+          </button>
+
+          <button
+            onClick={handleOpenAdd}
+            className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition shadow-sm self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Blog Article</span>
+          </button>
+        </div>
       </div>
 
       {/* Blog Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {blogs.map(b => (
+        {blogList.map(b => (
           <div key={b.id} className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition">
             <div>
               <div className="aspect-[16/9] w-full overflow-hidden bg-neutral-100 border-b border-neutral-200">
@@ -209,9 +264,14 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                     {b.category}
                   </span>
-                  <span className="text-[10px] text-neutral-400 font-mono">
-                    {(b.created_at || '').substring(0, 10)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${b.status === 'Published' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-neutral-100 text-neutral-600'}`}>
+                      {b.status || 'Published'}
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-mono">
+                      {(b.created_at || '').substring(0, 10)}
+                    </span>
+                  </div>
                 </div>
 
                 <h2 className="text-sm font-bold text-neutral-900 line-clamp-2 leading-snug">

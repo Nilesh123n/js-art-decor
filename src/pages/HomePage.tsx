@@ -886,7 +886,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
 
               <div className="space-y-4">
-                {blogs.slice(0, 2).map((blog) => (
+                {blogs.slice(0, 3).map((blog) => (
                   <div 
                     key={blog.id} 
                     onClick={() => onNavigate('blogs', { blogId: blog.id })}
@@ -895,16 +895,23 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <div className="w-16 h-16 shrink-0 rounded overflow-hidden bg-neutral-900 border border-[#D4A017]/50">
                       <ImageWithFallback src={blog.featured_image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <h4 className="text-xs font-serif font-bold text-white group-hover:text-[#D4A017] transition line-clamp-2">
                         {blog.title}
                       </h4>
                       <p className="text-[10px] text-[#A3A3A3]">
-                        May 10, 2024
+                        {(blog.created_at || '').substring(0, 10) || 'Recent'}
                       </p>
                     </div>
                   </div>
                 ))}
+
+                <button
+                  onClick={() => onNavigate('blogs')}
+                  className="w-full text-center py-2 text-xs font-bold text-[#D4A017] hover:text-[#E5B842] border border-[#D4A017]/40 hover:border-[#D4A017] rounded-lg transition bg-[#0A0A0A] shadow-[0_0_8px_rgba(212,160,23,0.15)]"
+                >
+                  View All Blog Articles →
+                </button>
               </div>
             </div>
           </div>
