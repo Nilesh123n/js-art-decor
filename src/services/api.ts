@@ -82,6 +82,7 @@ export const ApiService = {
     is_featured?: boolean;
     is_new_arrival?: boolean;
     search?: string;
+    all?: boolean;
   }): Promise<Product[]> {
     const params = new URLSearchParams();
     if (filters?.production_type) params.append('production_type', filters.production_type);
@@ -91,23 +92,43 @@ export const ApiService = {
     if (filters?.is_featured) params.append('is_featured', '1');
     if (filters?.is_new_arrival) params.append('is_new_arrival', '1');
     if (filters?.search) params.append('q', filters.search);
+    if (filters?.all) params.append('all', 'true');
+    params.append('_t', Date.now().toString());
 
     const url = `${API_BASE_URL}/products/get.php?${params.toString()}`;
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Product[]>>(res);
     return json.data || [];
   },
 
   async getProductBySlug(slug: string): Promise<Product> {
-    const url = `${API_BASE_URL}/products/detail.php?slug=${encodeURIComponent(slug)}`;
-    const res = await fetch(url);
+    const url = `${API_BASE_URL}/products/detail.php?slug=${encodeURIComponent(slug)}&_t=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Product>>(res);
     return json.data!;
   },
 
   async getProductById(id: number): Promise<Product> {
-    const url = `${API_BASE_URL}/products/detail.php?id=${id}`;
-    const res = await fetch(url);
+    const url = `${API_BASE_URL}/products/detail.php?id=${id}&_t=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Product>>(res);
     return json.data!;
   },
@@ -139,15 +160,27 @@ export const ApiService = {
   },
 
   async getPartners(): Promise<Partner[]> {
-    const url = `${API_BASE_URL}/partners/get.php`;
-    const res = await fetch(url);
+    const url = `${API_BASE_URL}/partners/get.php?_t=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Partner[]>>(res);
     return json.data || [];
   },
 
   async getPublicSettings(): Promise<Partial<SiteSettings>> {
-    const url = `${API_BASE_URL}/settings/public.php`;
-    const res = await fetch(url);
+    const url = `${API_BASE_URL}/settings/public.php?_t=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const json = await handleResponse<ApiResponse<Partial<SiteSettings>>>(res);
     return json.data || {};
   },
@@ -341,8 +374,15 @@ export const ApiService = {
 
   // Admin Products CRUD
   async getAdminProducts(): Promise<Product[]> {
-    const url = `${API_BASE_URL}/admin/products.php`;
-    const res = await fetch(url, { headers: getCsrfHeader() });
+    const url = `${API_BASE_URL}/admin/products.php?_t=${Date.now()}`;
+    const res = await fetch(url, { 
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        ...getCsrfHeader()
+      }
+    });
     const json = await handleResponse<ApiResponse<Product[]>>(res);
     return json.data || [];
   },
@@ -439,8 +479,15 @@ export const ApiService = {
 
   // Admin Orders
   async getAdminOrders(): Promise<Order[]> {
-    const url = `${API_BASE_URL}/admin/orders.php`;
-    const res = await fetch(url, { headers: getCsrfHeader() });
+    const url = `${API_BASE_URL}/admin/orders.php?_t=${Date.now()}`;
+    const res = await fetch(url, { 
+      cache: 'no-store',
+      headers: { 
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        ...getCsrfHeader() 
+      } 
+    });
     const json = await handleResponse<ApiResponse<Order[]>>(res);
     return json.data || [];
   },

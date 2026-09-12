@@ -51,6 +51,11 @@ async function startServer() {
   let settingsDb = { ...DEFAULT_SITE_SETTINGS };
   const settingsStoreFile = path.join(process.cwd(), "database", "settings_store.json");
   const blogsStoreFile = path.join(process.cwd(), "database", "blogs_store.json");
+  const productsStoreFile = path.join(process.cwd(), "database", "products_store.json");
+  const bannersStoreFile = path.join(process.cwd(), "database", "banners_store.json");
+  const sectionsStoreFile = path.join(process.cwd(), "database", "sections_store.json");
+  const partnersStoreFile = path.join(process.cwd(), "database", "partners_store.json");
+  const ordersStoreFile = path.join(process.cwd(), "database", "orders_store.json");
 
   // Load persistent settings from disk if available
   if (fs.existsSync(settingsStoreFile)) {
@@ -82,6 +87,116 @@ async function startServer() {
       console.log(`[Blogs] Initialized database/blogs_store.json with ${blogsDb.length} initial blogs`);
     } catch (e) {
       console.error("[Blogs] Failed to initialize blogs_store.json:", e);
+    }
+  }
+
+  // Load persistent products from disk if available
+  if (fs.existsSync(productsStoreFile)) {
+    try {
+      const storedProducts = JSON.parse(fs.readFileSync(productsStoreFile, "utf-8"));
+      if (Array.isArray(storedProducts) && storedProducts.length > 0) {
+        productsDb = storedProducts;
+        console.log(`[Products] Loaded ${productsDb.length} saved products from database/products_store.json`);
+      }
+    } catch (e) {
+      console.warn("[Products] Could not parse products_store.json", e);
+    }
+  } else {
+    try {
+      const dbDir = path.dirname(productsStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(productsStoreFile, JSON.stringify(productsDb, null, 2), "utf-8");
+      console.log(`[Products] Initialized database/products_store.json with ${productsDb.length} initial products`);
+    } catch (e) {
+      console.error("[Products] Failed to initialize products_store.json:", e);
+    }
+  }
+
+  // Load persistent banners from disk if available
+  if (fs.existsSync(bannersStoreFile)) {
+    try {
+      const storedBanners = JSON.parse(fs.readFileSync(bannersStoreFile, "utf-8"));
+      if (Array.isArray(storedBanners) && storedBanners.length > 0) {
+        bannersDb = storedBanners;
+        console.log(`[Banners] Loaded ${bannersDb.length} saved banners from database/banners_store.json`);
+      }
+    } catch (e) {
+      console.warn("[Banners] Could not parse banners_store.json", e);
+    }
+  } else {
+    try {
+      const dbDir = path.dirname(bannersStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(bannersStoreFile, JSON.stringify(bannersDb, null, 2), "utf-8");
+      console.log(`[Banners] Initialized database/banners_store.json with ${bannersDb.length} initial banners`);
+    } catch (e) {
+      console.error("[Banners] Failed to initialize banners_store.json:", e);
+    }
+  }
+
+  // Load persistent sections from disk if available
+  if (fs.existsSync(sectionsStoreFile)) {
+    try {
+      const storedSections = JSON.parse(fs.readFileSync(sectionsStoreFile, "utf-8"));
+      if (Array.isArray(storedSections) && storedSections.length > 0) {
+        sectionsDb = storedSections;
+        console.log(`[Sections] Loaded ${sectionsDb.length} saved sections from database/sections_store.json`);
+      }
+    } catch (e) {
+      console.warn("[Sections] Could not parse sections_store.json", e);
+    }
+  } else {
+    try {
+      const dbDir = path.dirname(sectionsStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(sectionsStoreFile, JSON.stringify(sectionsDb, null, 2), "utf-8");
+      console.log(`[Sections] Initialized database/sections_store.json with ${sectionsDb.length} initial sections`);
+    } catch (e) {
+      console.error("[Sections] Failed to initialize sections_store.json:", e);
+    }
+  }
+
+  // Load persistent partners from disk if available
+  if (fs.existsSync(partnersStoreFile)) {
+    try {
+      const storedPartners = JSON.parse(fs.readFileSync(partnersStoreFile, "utf-8"));
+      if (Array.isArray(storedPartners) && storedPartners.length > 0) {
+        partnersDb = storedPartners;
+        console.log(`[Partners] Loaded ${partnersDb.length} saved partners from database/partners_store.json`);
+      }
+    } catch (e) {
+      console.warn("[Partners] Could not parse partners_store.json", e);
+    }
+  } else {
+    try {
+      const dbDir = path.dirname(partnersStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(partnersStoreFile, JSON.stringify(partnersDb, null, 2), "utf-8");
+      console.log(`[Partners] Initialized database/partners_store.json with ${partnersDb.length} initial partners`);
+    } catch (e) {
+      console.error("[Partners] Failed to initialize partners_store.json:", e);
+    }
+  }
+
+  // Load persistent orders from disk if available
+  if (fs.existsSync(ordersStoreFile)) {
+    try {
+      const storedOrders = JSON.parse(fs.readFileSync(ordersStoreFile, "utf-8"));
+      if (Array.isArray(storedOrders) && storedOrders.length > 0) {
+        ordersDb = storedOrders;
+        console.log(`[Orders] Loaded ${ordersDb.length} saved orders from database/orders_store.json`);
+      }
+    } catch (e) {
+      console.warn("[Orders] Could not parse orders_store.json", e);
+    }
+  } else {
+    try {
+      const dbDir = path.dirname(ordersStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(ordersStoreFile, JSON.stringify(ordersDb, null, 2), "utf-8");
+      console.log(`[Orders] Initialized database/orders_store.json with ${ordersDb.length} initial orders`);
+    } catch (e) {
+      console.error("[Orders] Failed to initialize orders_store.json:", e);
     }
   }
 
@@ -186,6 +301,239 @@ async function startServer() {
     }
   };
 
+  // Helper to persist products both to JSON disk store and to MySQL products table
+  const saveProductsToDb = async (newProducts: any[]) => {
+    productsDb = [...newProducts];
+
+    // 1. Write to database/products_store.json immediately so it survives restarts & multi-devices
+    try {
+      const dbDir = path.dirname(productsStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(productsStoreFile, JSON.stringify(productsDb, null, 2), "utf-8");
+      console.log(`[Products] Saved ${productsDb.length} products to disk (${productsStoreFile})`);
+    } catch (e) {
+      console.error("[Products] Failed to write products_store.json:", e);
+    }
+
+    // 2. Synchronize with MySQL products table if MySQL connection is active
+    if (mysqlPool) {
+      try {
+        await mysqlPool.query(`
+          CREATE TABLE IF NOT EXISTS products (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            slug VARCHAR(255) NOT NULL UNIQUE,
+            sku VARCHAR(100) NOT NULL UNIQUE,
+            description TEXT NULL,
+            short_description TEXT NULL,
+            production_type VARCHAR(50) NOT NULL DEFAULT 'Handmade',
+            segment VARCHAR(50) NOT NULL DEFAULT 'Home',
+            product_type VARCHAR(50) NOT NULL DEFAULT 'HOME DECOR',
+            sales_availability VARCHAR(50) NOT NULL DEFAULT 'Both',
+            retail_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            wholesale_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            stock_quantity INT NOT NULL DEFAULT 0,
+            min_wholesale_qty INT NOT NULL DEFAULT 10,
+            size VARCHAR(100) NULL,
+            material VARCHAR(100) NULL,
+            color VARCHAR(100) NULL,
+            images JSON NULL,
+            is_featured TINYINT(1) DEFAULT 0,
+            is_new_arrival TINYINT(1) DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
+        for (const p of productsDb) {
+          const imagesJson = JSON.stringify(Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []));
+          await mysqlPool.query(
+            `INSERT INTO products (
+              id, name, slug, sku, description, short_description,
+              production_type, segment, product_type, sales_availability,
+              retail_price, wholesale_price, stock_quantity, min_wholesale_qty,
+              size, material, color, images, is_featured, is_new_arrival, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+              name = VALUES(name),
+              slug = VALUES(slug),
+              sku = VALUES(sku),
+              description = VALUES(description),
+              short_description = VALUES(short_description),
+              production_type = VALUES(production_type),
+              segment = VALUES(segment),
+              product_type = VALUES(product_type),
+              sales_availability = VALUES(sales_availability),
+              retail_price = VALUES(retail_price),
+              wholesale_price = VALUES(wholesale_price),
+              stock_quantity = VALUES(stock_quantity),
+              min_wholesale_qty = VALUES(min_wholesale_qty),
+              size = VALUES(size),
+              material = VALUES(material),
+              color = VALUES(color),
+              images = VALUES(images),
+              is_featured = VALUES(is_featured),
+              is_new_arrival = VALUES(is_new_arrival),
+              is_active = VALUES(is_active),
+              updated_at = NOW()`,
+            [
+              p.id,
+              p.name || "Untitled Product",
+              p.slug || (p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : `prod-${p.id}`),
+              p.sku || `JS-${p.id}`,
+              p.description || "",
+              p.short_description || "",
+              p.production_type || "Handmade",
+              p.segment || "Home",
+              p.product_type || "HOME DECOR",
+              p.sales_availability || "Both",
+              Number(p.retail_price) || 0,
+              Number(p.wholesale_price) || 0,
+              Number(p.stock_quantity) || 0,
+              Number(p.min_wholesale_qty) || 10,
+              p.size || "",
+              p.material || "",
+              p.color || "",
+              imagesJson,
+              p.is_featured ? 1 : 0,
+              p.is_new_arrival ? 1 : 0,
+              Boolean((p as any).is_active) ? 1 : 0
+            ]
+          );
+        }
+        console.log(`[Products] Synchronized ${productsDb.length} products with MySQL database.`);
+      } catch (err: any) {
+        console.error("[Products] MySQL products sync failed:", err?.message || err);
+      }
+    }
+  };
+
+  // Helper to persist banners
+  const saveBannersToDb = async (newBanners: any[]) => {
+    bannersDb = [...newBanners];
+    try {
+      const dbDir = path.dirname(bannersStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(bannersStoreFile, JSON.stringify(bannersDb, null, 2), "utf-8");
+      console.log(`[Banners] Saved ${bannersDb.length} banners to disk (${bannersStoreFile})`);
+    } catch (e) {
+      console.error("[Banners] Failed to write banners_store.json:", e);
+    }
+
+    if (mysqlPool) {
+      try {
+        await mysqlPool.query(`
+          CREATE TABLE IF NOT EXISTS banners (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            subtitle VARCHAR(255) NULL,
+            highlight_text VARCHAR(255) NULL,
+            description TEXT NULL,
+            image_url VARCHAR(500) NOT NULL,
+            link_url VARCHAR(255) NULL,
+            button_text VARCHAR(100) NULL,
+            banner_type VARCHAR(50) NOT NULL DEFAULT 'hero',
+            display_order INT NOT NULL DEFAULT 1,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        for (const b of bannersDb) {
+          await mysqlPool.query(
+            `INSERT INTO banners (id, title, subtitle, highlight_text, description, image_url, link_url, button_text, banner_type, display_order, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+             title = VALUES(title), subtitle = VALUES(subtitle), highlight_text = VALUES(highlight_text),
+             description = VALUES(description), image_url = VALUES(image_url), link_url = VALUES(link_url),
+             button_text = VALUES(button_text), banner_type = VALUES(banner_type), display_order = VALUES(display_order),
+             is_active = VALUES(is_active)`,
+            [
+              b.id, b.title, b.subtitle || "", b.highlight_text || "", b.description || "",
+              b.image_url || "", b.link_url || "", b.button_text || "", b.banner_type || "hero",
+              Number(b.display_order) || 1, b.is_active ? 1 : 0
+            ]
+          );
+        }
+      } catch (err: any) {
+        console.error("[Banners] MySQL banners sync error:", err?.message || err);
+      }
+    }
+  };
+
+  // Helper to persist sections
+  const saveSectionsToDb = async (newSections: any[]) => {
+    sectionsDb = [...newSections];
+    try {
+      const dbDir = path.dirname(sectionsStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(sectionsStoreFile, JSON.stringify(sectionsDb, null, 2), "utf-8");
+      console.log(`[Sections] Saved ${sectionsDb.length} sections to disk (${sectionsStoreFile})`);
+    } catch (e) {
+      console.error("[Sections] Failed to write sections_store.json:", e);
+    }
+  };
+
+  // Helper to persist partners
+  const savePartnersToDb = async (newPartners: any[]) => {
+    partnersDb = [...newPartners];
+    try {
+      const dbDir = path.dirname(partnersStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(partnersStoreFile, JSON.stringify(partnersDb, null, 2), "utf-8");
+      console.log(`[Partners] Saved ${partnersDb.length} partners to disk (${partnersStoreFile})`);
+    } catch (e) {
+      console.error("[Partners] Failed to write partners_store.json:", e);
+    }
+
+    if (mysqlPool) {
+      try {
+        await mysqlPool.query(`
+          CREATE TABLE IF NOT EXISTS partners (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            partner_type VARCHAR(100) NOT NULL DEFAULT 'Hotel',
+            logo_url VARCHAR(500) NULL,
+            description TEXT NULL,
+            website VARCHAR(255) NULL,
+            display_order INT NOT NULL DEFAULT 1,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        for (const p of partnersDb) {
+          await mysqlPool.query(
+            `INSERT INTO partners (id, name, partner_type, logo_url, description, website, display_order, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+             name = VALUES(name), partner_type = VALUES(partner_type), logo_url = VALUES(logo_url),
+             description = VALUES(description), website = VALUES(website), display_order = VALUES(display_order),
+             is_active = VALUES(is_active)`,
+            [
+              p.id, p.name, (p as any).partner_type || "Hotel", p.logo_url || "", p.description || "",
+              p.website || "", Number(p.display_order) || 1, p.is_active ? 1 : 0
+            ]
+          );
+        }
+      } catch (err: any) {
+        console.error("[Partners] MySQL partners sync error:", err?.message || err);
+      }
+    }
+  };
+
+  // Helper to persist orders
+  const saveOrdersToDb = async (newOrders: any[]) => {
+    ordersDb = [...newOrders];
+    try {
+      const dbDir = path.dirname(ordersStoreFile);
+      if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+      fs.writeFileSync(ordersStoreFile, JSON.stringify(ordersDb, null, 2), "utf-8");
+      console.log(`[Orders] Saved ${ordersDb.length} orders to disk (${ordersStoreFile})`);
+    } catch (e) {
+      console.error("[Orders] Failed to write orders_store.json:", e);
+    }
+  };
+
   // If MySQL is already available on startup, query settings and blogs
   if (mysqlPool) {
     try {
@@ -276,6 +624,74 @@ async function startServer() {
     } catch (e: any) {
       console.warn("[Blogs] MySQL blogs initialization check:", e?.message || e);
     }
+
+    try {
+      await mysqlPool.query(`
+        CREATE TABLE IF NOT EXISTS products (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          slug VARCHAR(255) NOT NULL UNIQUE,
+          sku VARCHAR(100) NOT NULL UNIQUE,
+          description TEXT NULL,
+          short_description TEXT NULL,
+          production_type VARCHAR(50) NOT NULL DEFAULT 'Handmade',
+          segment VARCHAR(50) NOT NULL DEFAULT 'Home',
+          product_type VARCHAR(50) NOT NULL DEFAULT 'HOME DECOR',
+          sales_availability VARCHAR(50) NOT NULL DEFAULT 'Both',
+          retail_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          wholesale_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          stock_quantity INT NOT NULL DEFAULT 0,
+          min_wholesale_qty INT NOT NULL DEFAULT 10,
+          size VARCHAR(100) NULL,
+          material VARCHAR(100) NULL,
+          color VARCHAR(100) NULL,
+          images JSON NULL,
+          is_featured TINYINT(1) DEFAULT 0,
+          is_new_arrival TINYINT(1) DEFAULT 0,
+          is_active TINYINT(1) DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      const [productRows]: any = await mysqlPool.query("SELECT * FROM products ORDER BY id DESC");
+      if (Array.isArray(productRows) && productRows.length > 0) {
+        productsDb = productRows.map((r: any) => ({
+          id: Number(r.id),
+          name: r.name,
+          slug: r.slug,
+          sku: r.sku,
+          description: r.description || "",
+          short_description: r.short_description || "",
+          production_type: r.production_type || "Handmade",
+          segment: r.segment || "Home",
+          product_type: r.product_type || "HOME DECOR",
+          sales_availability: r.sales_availability || "Both",
+          retail_price: Number(r.retail_price) || 0,
+          wholesale_price: Number(r.wholesale_price) || 0,
+          stock_quantity: Number(r.stock_quantity) || 0,
+          min_wholesale_qty: Number(r.min_wholesale_qty) || 10,
+          size: r.size || "",
+          material: r.material || "",
+          color: r.color || "",
+          images: typeof r.images === "string" ? JSON.parse(r.images || "[]") : (r.images || []),
+          is_featured: Boolean(r.is_featured),
+          is_new_arrival: Boolean(r.is_new_arrival),
+          is_active: r.is_active !== 0 && r.is_active !== false,
+          created_at: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString(),
+          updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : new Date().toISOString()
+        }));
+        console.log(`[Products] Loaded ${productsDb.length} products from MySQL database.`);
+        try {
+          fs.writeFileSync(productsStoreFile, JSON.stringify(productsDb, null, 2), "utf-8");
+        } catch {}
+      } else {
+        await saveProductsToDb(productsDb);
+        console.log(`[Products] Seeded ${productsDb.length} initial products into MySQL database.`);
+      }
+    } catch (e: any) {
+      console.warn("[Products] MySQL products initialization check:", e?.message || e);
+    }
   }
 
   let activeAdminSessions = new Set<string>();
@@ -329,17 +745,23 @@ async function startServer() {
 
   // Products List
   app.get(["/api/products/get.php", "/api/products/get"], (req, res) => {
-    const { q, segment, product_type, production_type, sales_availability, is_featured, is_new_arrival } = req.query;
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
-    let filtered = productsDb.filter((p) => p.is_active);
+    const { q, segment, product_type, production_type, sales_availability, is_featured, is_new_arrival, all, include_inactive } = req.query;
+
+    const includeAll = all === "true" || include_inactive === "true";
+    let filtered = includeAll ? [...productsDb] : productsDb.filter((p) => Boolean((p as any).is_active));
 
     if (q) {
       const query = String(q).toLowerCase();
       filtered = filtered.filter(
         (p) =>
           p.name.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query) ||
-          p.sku.toLowerCase().includes(query)
+          (p.description && p.description.toLowerCase().includes(query)) ||
+          (p.sku && p.sku.toLowerCase().includes(query)) ||
+          (p.short_description && p.short_description.toLowerCase().includes(query))
       );
     }
 
@@ -361,30 +783,44 @@ async function startServer() {
       );
     }
 
-    if (is_featured === "1") {
+    if (is_featured === "1" || is_featured === "true") {
       filtered = filtered.filter((p) => p.is_featured);
     }
 
-    if (is_new_arrival === "1") {
+    if (is_new_arrival === "1" || is_new_arrival === "true") {
       filtered = filtered.filter((p) => p.is_new_arrival);
     }
 
-    res.json({ success: true, data: filtered });
+    filtered.sort((a: any, b: any) => {
+      const idA = Number(a.id) || 0;
+      const idB = Number(b.id) || 0;
+      return idB - idA;
+    });
+
+    res.json({ success: true, data: filtered, count: filtered.length });
   });
 
   // Product Detail
   app.get(["/api/products/detail.php", "/api/products/detail"], (req, res) => {
-    const { id, slug } = req.query;
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    const { id, slug, preview } = req.query;
 
     let prod = null;
     if (id) {
-      prod = productsDb.find((p) => String(p.id) === String(id) && p.is_active);
+      prod = productsDb.find((p) => String(p.id) === String(id));
     } else if (slug) {
-      prod = productsDb.find((p) => p.slug === String(slug) && p.is_active);
+      prod = productsDb.find((p) => p.slug === String(slug));
     }
 
     if (!prod) {
       return res.status(404).json({ success: false, error: "Product not found." });
+    }
+
+    if (!prod.is_active && preview !== "true") {
+      return res.status(404).json({ success: false, error: "This product is currently inactive." });
     }
 
     res.json({ success: true, data: prod });
@@ -539,7 +975,7 @@ async function startServer() {
   });
 
   // Create Order (COD & Razorpay)
-  app.post(["/api/orders/create.php", "/api/orders/create"], (req, res) => {
+  app.post(["/api/orders/create.php", "/api/orders/create"], async (req, res) => {
     const { customer, items, payment_method, order_type } = req.body;
 
     if (!customer || !items || !Array.isArray(items) || items.length === 0) {
@@ -619,6 +1055,7 @@ async function startServer() {
     };
 
     ordersDb.unshift(newOrder);
+    await saveOrdersToDb(ordersDb);
 
     return res.json({
       success: true,
@@ -632,7 +1069,7 @@ async function startServer() {
   });
 
   // Verify Payment
-  app.post(["/api/orders/verify_payment.php", "/api/orders/verify_payment"], (req, res) => {
+  app.post(["/api/orders/verify_payment.php", "/api/orders/verify_payment"], async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -663,6 +1100,9 @@ async function startServer() {
     order.paymentStatus = "Paid";
     order.orderStatus = "Confirmed";
     order.razorpayPaymentId = razorpay_payment_id;
+
+    await saveOrdersToDb(ordersDb);
+    await saveProductsToDb(productsDb);
 
     res.json({
       success: true,
@@ -932,25 +1372,59 @@ async function startServer() {
   });
 
   // Admin Products CRUD
-  app.all(["/api/admin/products.php", "/api/admin/products"], (req, res) => {
+  app.all(["/api/admin/products.php", "/api/admin/products"], async (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     if (req.method === "GET") {
-      return res.json({ success: true, data: productsDb });
+      const sorted = [...productsDb].sort((a: any, b: any) => {
+        const idA = Number(a.id) || 0;
+        const idB = Number(b.id) || 0;
+        return idB - idA;
+      });
+      return res.json({ success: true, data: sorted });
     }
 
     if (req.method === "POST") {
-      const body = req.body;
-      const newId = productsDb.length > 0 ? Math.max(...productsDb.map((p) => p.id)) + 1 : 1;
+      const body = req.body || {};
+
+      // Handle batch save from admin: { products: Product[] }
+      if (Array.isArray(body.products)) {
+        await saveProductsToDb(body.products);
+        return res.json({ success: true, message: "Products updated and saved to database successfully.", data: productsDb });
+      }
+
+      if (!body.name || !String(body.name).trim()) {
+        return res.status(400).json({ success: false, error: "Product name is required." });
+      }
+
+      const newId = productsDb.length > 0 ? Math.max(...productsDb.map((p) => Number(p.id) || 0)) + 1 : 1;
+      const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") || `prod-${newId}`;
+      const sku = body.sku || `JS-PROD-${newId}`;
+
+      let images = body.images;
+      if (!images || (Array.isArray(images) && images.length === 0)) {
+        images = ["https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80"];
+      } else if (typeof images === "string") {
+        try {
+          images = JSON.parse(images);
+        } catch {
+          images = [images];
+        }
+      }
+
       const newProduct = {
-        id: newId,
-        name: body.name,
-        slug: body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        sku: body.sku,
+        id: body.id ? Number(body.id) : newId,
+        name: String(body.name).trim(),
+        slug: slug,
+        sku: sku,
         description: body.description || "",
         short_description: body.short_description || "",
-        images: body.images || [],
+        images: Array.isArray(images) ? images : [images],
         production_type: body.production_type || "Handmade",
         segment: body.segment || "Home",
-        product_type: body.product_type || "Bedsheet",
+        product_type: body.product_type || "HOME DECOR",
         sales_availability: body.sales_availability || "Both",
         retail_price: Number(body.retail_price) || 0,
         wholesale_price: Number(body.wholesale_price) || 0,
@@ -960,31 +1434,84 @@ async function startServer() {
         material: body.material || "",
         color: body.color || "",
         is_featured: !!body.is_featured,
-        is_new_arrival: !!body.is_new_arrival,
+        is_new_arrival: body.is_new_arrival !== undefined ? !!body.is_new_arrival : true,
         is_active: body.is_active !== undefined ? !!body.is_active : true,
-        created_at: new Date().toISOString(),
+        created_at: body.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      productsDb.unshift(newProduct);
-      return res.json({ success: true, id: newId, message: "Product created successfully." });
+      // Ensure no duplicate IDs
+      productsDb = [newProduct, ...productsDb.filter((p) => Number(p.id) !== newProduct.id)];
+      await saveProductsToDb(productsDb);
+
+      return res.json({ 
+        success: true, 
+        id: newProduct.id, 
+        message: "Product created and saved to database successfully.",
+        data: newProduct,
+        products: productsDb
+      });
     }
 
     if (req.method === "PUT") {
-      const body = req.body;
-      const idx = productsDb.findIndex((p) => p.id === body.id);
+      const body = req.body || {};
+      const targetId = Number(body.id);
+      const idx = productsDb.findIndex((p) => Number(p.id) === targetId);
       if (idx === -1) {
         return res.status(404).json({ success: false, error: "Product not found." });
       }
 
-      productsDb[idx] = { ...productsDb[idx], ...body, updated_at: new Date().toISOString() };
-      return res.json({ success: true, message: "Product updated successfully." });
+      let images = body.images !== undefined ? body.images : productsDb[idx].images;
+      if (typeof images === "string") {
+        try {
+          images = JSON.parse(images);
+        } catch {
+          images = [images];
+        }
+      }
+
+      productsDb[idx] = { 
+        ...productsDb[idx], 
+        ...body, 
+        id: targetId,
+        images: Array.isArray(images) ? images : (images ? [images] : []),
+        retail_price: body.retail_price !== undefined ? Number(body.retail_price) : productsDb[idx].retail_price,
+        wholesale_price: body.wholesale_price !== undefined ? Number(body.wholesale_price) : productsDb[idx].wholesale_price,
+        stock_quantity: body.stock_quantity !== undefined ? Number(body.stock_quantity) : productsDb[idx].stock_quantity,
+        min_wholesale_qty: body.min_wholesale_qty !== undefined ? Number(body.min_wholesale_qty) : productsDb[idx].min_wholesale_qty,
+        is_active: body.is_active !== undefined ? !!body.is_active : productsDb[idx].is_active,
+        is_featured: body.is_featured !== undefined ? !!body.is_featured : productsDb[idx].is_featured,
+        is_new_arrival: body.is_new_arrival !== undefined ? !!body.is_new_arrival : productsDb[idx].is_new_arrival,
+        updated_at: new Date().toISOString() 
+      };
+
+      await saveProductsToDb(productsDb);
+
+      return res.json({ 
+        success: true, 
+        message: "Product updated and saved to database successfully.", 
+        data: productsDb[idx],
+        products: productsDb 
+      });
     }
 
     if (req.method === "DELETE") {
-      const { id } = req.body;
-      productsDb = productsDb.filter((p) => p.id !== id);
-      return res.json({ success: true, message: "Product deleted successfully." });
+      const id = Number(req.body?.id || req.query?.id);
+      if (!id) {
+        return res.status(400).json({ success: false, error: "Product ID is required for deletion." });
+      }
+      productsDb = productsDb.filter((p) => Number(p.id) !== id);
+
+      if (mysqlPool) {
+        try {
+          await mysqlPool.query("DELETE FROM products WHERE id = ?", [id]);
+        } catch (dbErr) {
+          console.error("[Products] Error deleting product from MySQL:", dbErr);
+        }
+      }
+
+      await saveProductsToDb(productsDb);
+      return res.json({ success: true, message: "Product deleted from database successfully.", products: productsDb });
     }
 
     res.status(405).json({ success: false, error: "Method not allowed." });
@@ -1116,6 +1643,11 @@ async function startServer() {
         } catch (dbErr) {
           console.error("Error updating order in MySQL:", dbErr);
         }
+      }
+
+      await saveOrdersToDb(ordersDb);
+      if (order_status === "Cancelled") {
+        await saveProductsToDb(productsDb);
       }
 
       const statusMsg = isTransitionFromProcessingToShipped
@@ -1288,7 +1820,11 @@ async function startServer() {
   });
 
   // Admin Partners CRUD
-  app.all(["/api/admin/partners.php", "/api/admin/partners"], (req, res) => {
+  app.all(["/api/admin/partners.php", "/api/admin/partners"], async (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     if (req.method === "GET") {
       return res.json({ success: true, data: partnersDb });
     }
@@ -1298,14 +1834,15 @@ async function startServer() {
 
       // Handle batch save from admin: { partners: Partner[] }
       if (Array.isArray(body.partners)) {
-        partnersDb = body.partners;
-        return res.json({ success: true, message: "Partners updated successfully.", data: partnersDb });
+        await savePartnersToDb(body.partners);
+        return res.json({ success: true, message: "Partners updated and saved successfully.", data: partnersDb });
       }
 
-      const newId = partnersDb.length > 0 ? Math.max(...partnersDb.map((p) => p.id)) + 1 : 1;
+      const newId = partnersDb.length > 0 ? Math.max(...partnersDb.map((p) => Number(p.id) || 0)) + 1 : 1;
       const newPartner = {
-        id: body.id || newId,
+        id: body.id ? Number(body.id) : newId,
         name: String(body.name || "Partner"),
+        partner_type: body.partner_type || "Hotel",
         logo_url: body.logo_url || "",
         description: body.description || "",
         website: body.website || "",
@@ -1313,23 +1850,34 @@ async function startServer() {
         is_active: body.is_active !== undefined ? !!body.is_active : true
       };
 
-      partnersDb.push(newPartner);
-      return res.json({ success: true, id: newId, message: "Partner added.", data: newPartner });
+      partnersDb = [...partnersDb.filter((p) => Number(p.id) !== newPartner.id), newPartner];
+      await savePartnersToDb(partnersDb);
+      return res.json({ success: true, id: newPartner.id, message: "Partner added and saved.", data: newPartner });
     }
 
     if (req.method === "PUT") {
       const body = req.body || {};
-      const idx = partnersDb.findIndex((p) => p.id === body.id);
+      const targetId = Number(body.id);
+      const idx = partnersDb.findIndex((p) => Number(p.id) === targetId);
       if (idx === -1) return res.status(404).json({ success: false, error: "Partner not found." });
 
-      partnersDb[idx] = { ...partnersDb[idx], ...body };
-      return res.json({ success: true, message: "Partner updated." });
+      partnersDb[idx] = { ...partnersDb[idx], ...body, id: targetId };
+      await savePartnersToDb(partnersDb);
+      return res.json({ success: true, message: "Partner updated and saved.", data: partnersDb[idx] });
     }
 
     if (req.method === "DELETE") {
-      const { id } = req.body || {};
-      partnersDb = partnersDb.filter((p) => p.id !== id);
-      return res.json({ success: true, message: "Partner removed." });
+      const id = Number(req.body?.id || req.query?.id);
+      partnersDb = partnersDb.filter((p) => Number(p.id) !== id);
+      if (mysqlPool) {
+        try {
+          await mysqlPool.query("DELETE FROM partners WHERE id = ?", [id]);
+        } catch (err) {
+          console.error("Error deleting partner from MySQL:", err);
+        }
+      }
+      await savePartnersToDb(partnersDb);
+      return res.json({ success: true, message: "Partner removed and saved." });
     }
 
     res.status(405).json({ success: false, error: "Method not allowed." });
@@ -1499,7 +2047,7 @@ async function startServer() {
     res.json({ success: true, data: list });
   });
 
-  app.post(["/api/banners/save.php", "/api/banners/save"], (req, res) => {
+  app.post(["/api/banners/save.php", "/api/banners/save"], async (req, res) => {
     const body = req.body;
     if (!body || !body.title || !body.image_url) {
       return res.status(400).json({ success: false, message: "Title and image_url are required." });
@@ -1509,6 +2057,7 @@ async function startServer() {
       const idx = bannersDb.findIndex((b) => b.id === body.id);
       if (idx !== -1) {
         bannersDb[idx] = { ...bannersDb[idx], ...body };
+        await saveBannersToDb(bannersDb);
         return res.json({ success: true, message: "Banner updated.", id: body.id });
       }
     }
@@ -1529,13 +2078,22 @@ async function startServer() {
       created_at: new Date().toISOString()
     };
     bannersDb.push(newBanner);
+    await saveBannersToDb(bannersDb);
     res.json({ success: true, message: "Banner created.", id: newId });
   });
 
-  app.all(["/api/banners/delete.php", "/api/banners/delete"], (req, res) => {
+  app.all(["/api/banners/delete.php", "/api/banners/delete"], async (req, res) => {
     const id = Number(req.body?.id || req.query?.id);
     if (!id) return res.status(400).json({ success: false, message: "Valid ID required." });
     bannersDb = bannersDb.filter((b) => b.id !== id);
+    if (mysqlPool) {
+      try {
+        await mysqlPool.query("DELETE FROM banners WHERE id = ?", [id]);
+      } catch (err) {
+        console.error("Error deleting banner from MySQL:", err);
+      }
+    }
+    await saveBannersToDb(bannersDb);
     res.json({ success: true, message: "Banner deleted." });
   });
 
@@ -1555,7 +2113,7 @@ async function startServer() {
     res.json({ success: true, data: list });
   });
 
-  app.post(["/api/sections/save.php", "/api/sections/save"], (req, res) => {
+  app.post(["/api/sections/save.php", "/api/sections/save"], async (req, res) => {
     const body = req.body;
     if (!body || !body.section_key || !body.title) {
       return res.status(400).json({ success: false, message: "section_key and title are required." });
@@ -1564,6 +2122,7 @@ async function startServer() {
     const idx = sectionsDb.findIndex((s) => s.section_key === body.section_key);
     if (idx !== -1) {
       sectionsDb[idx] = { ...sectionsDb[idx], ...body };
+      await saveSectionsToDb(sectionsDb);
       return res.json({ success: true, message: "Section updated." });
     } else {
       const newId = sectionsDb.length > 0 ? Math.max(...sectionsDb.map((s) => s.id)) + 1 : 1;
@@ -1582,6 +2141,7 @@ async function startServer() {
         is_active: body.is_active !== undefined ? !!body.is_active : true,
         display_order: Number(body.display_order) || 1
       });
+      await saveSectionsToDb(sectionsDb);
       return res.json({ success: true, message: "Section created.", id: newId });
     }
   });

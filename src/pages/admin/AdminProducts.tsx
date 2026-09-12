@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Search, Upload, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search, Upload, Loader2, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { Product, ProductionType, Segment, ProductType, SalesAvailability } from '../../types/ecommerce';
 import { ApiService } from '../../services/api';
 import { ImageKitUploader } from '../../components/admin/ImageKitUploader';
 
 interface AdminProductsProps {
   products: Product[];
-  onRefreshProducts: () => void;
+  onRefreshProducts: () => void | Promise<void>;
 }
 
 export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefreshProducts }) => {
@@ -15,12 +15,33 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
     p.sku.toLowerCase().includes(search.toLowerCase())
   );
+
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
+    setTimeout(() => {
+      setSuccessMessage(null);
+    }, 4000);
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await onRefreshProducts();
+      showSuccess("Products reloaded directly from database.");
+    } catch {
+      // ignore
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleOpenAddModal = () => {
     setError(null);
@@ -59,7 +80,8 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
     if (confirm('Are you sure you want to delete this product from the database?')) {
       try {
         await ApiService.deleteAdminProduct(id);
-        onRefreshProducts();
+        await onRefreshProducts();
+        showSuccess('Product deleted from database successfully.');
       } catch (err: any) {
         alert(err.message || 'Failed to delete product.');
       }
@@ -95,15 +117,30 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
 
     try {
       const slug = editingProduct.slug || editingProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-      const payload = { ...editingProduct, slug };
+      const validImages = editingProduct.images && editingProduct.images.length > 0 && editingProduct.images[0]
+        ? editingProduct.images
+        : ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80'];
+
+      const payload = { 
+        ...editingProduct, 
+        slug,
+        images: validImages,
+        retail_price: Number(editingProduct.retail_price) || 0,
+        wholesale_price: Number(editingProduct.wholesale_price) || 0,
+        stock_quantity: Number(editingProduct.stock_quantity) || 0,
+        min_wholesale_qty: Number(editingProduct.min_wholesale_qty) || 1,
+        is_active: editingProduct.is_active !== undefined ? editingProduct.is_active : true
+      };
 
       if (editingProduct.id) {
         await ApiService.updateAdminProduct(payload as Product);
+        showSuccess(`Product "${payload.name}" updated and saved to database!`);
       } else {
         await ApiService.createAdminProduct(payload);
+        showSuccess(`Product "${payload.name}" added to database and live on all devices!`);
       }
 
-      onRefreshProducts();
+      await onRefreshProducts();
       setModalOpen(false);
       setEditingProduct(null);
     } catch (err: any) {
@@ -115,19 +152,39 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {successMessage && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-2.5 shadow-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span className="text-xs font-semibold">{successMessage}</span>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-serif font-bold text-neutral-900">Product Catalog Management</h1>
-          <p className="text-xs text-neutral-500">Add, edit prices, wholesale MOQ, and manage MySQL inventory.</p>
+          <p className="text-xs text-neutral-500">Add, edit prices, wholesale MOQ, and manage database inventory (changes sync to all devices).</p>
         </div>
 
-        <button
-          onClick={handleOpenAddModal}
-          className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Product</span>
-        </button>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="border border-neutral-300 hover:bg-neutral-100 text-neutral-700 text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center gap-1.5 transition disabled:opacity-50"
+            title="Refresh from database"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>Sync</span>
+          </button>
+
+          <button
+            onClick={handleOpenAddModal}
+            className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Product</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Input */}

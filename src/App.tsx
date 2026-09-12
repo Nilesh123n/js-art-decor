@@ -129,6 +129,11 @@ export default function App() {
       if (res && res.authenticated) {
         setIsAdminAuth(true);
         loadAdminOrders();
+        ApiService.getAdminProducts().then((adminProds) => {
+          if (Array.isArray(adminProds) && adminProds.length > 0) {
+            setProducts(adminProds);
+          }
+        }).catch(() => {});
       } else {
         setIsAdminAuth(false);
       }
@@ -205,8 +210,13 @@ export default function App() {
   };
 
   const handleRefreshProducts = async () => {
-    const prods = await ApiService.getProducts();
-    if (Array.isArray(prods)) setProducts(prods);
+    try {
+      const prods = isAdminAuth ? await ApiService.getAdminProducts() : await ApiService.getProducts();
+      if (Array.isArray(prods)) setProducts(prods);
+    } catch {
+      const prods = await ApiService.getProducts();
+      if (Array.isArray(prods)) setProducts(prods);
+    }
   };
 
   const handleRefreshOrders = async () => {
