@@ -86,7 +86,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
   const materialInfo = getMaterialInfo(product.material);
 
-  const displayUnitPrice = isWholesaleMode ? product.wholesale_price : product.retail_price;
+  const hasDiscount = !isWholesaleMode && !!product.discount_price && Number(product.discount_price) > 0 && Number(product.discount_price) < Number(product.retail_price);
+  const displayUnitPrice = isWholesaleMode 
+    ? product.wholesale_price 
+    : (hasDiscount ? Number(product.discount_price) : product.retail_price);
+  const discountPercent = hasDiscount ? Math.round(((product.retail_price - Number(product.discount_price)) / product.retail_price) * 100) : 0;
   const totalPrice = displayUnitPrice * quantity;
 
   const handleQuantityChange = (newQty: number) => {
@@ -188,12 +192,24 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
           {/* Pricing Box */}
           <div className="p-4 bg-[#0A0A0A] border border-[#D4A017] rounded-xl space-y-2 shadow-[0_0_15px_rgba(212,160,23,0.15)]">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <div className="text-2xl font-bold text-[#E5B842]">
-                  ₹{displayUnitPrice.toLocaleString('en-IN')}
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-2xl sm:text-3xl font-bold text-[#E5B842]">
+                    ₹{displayUnitPrice.toLocaleString('en-IN')}
+                  </span>
+                  {hasDiscount && (
+                    <>
+                      <span className="text-sm text-neutral-400 line-through font-mono">
+                        ₹{product.retail_price.toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded">
+                        {discountPercent}% OFF
+                      </span>
+                    </>
+                  )}
                   <span className="text-xs font-normal text-[#A3A3A3] ml-1">
-                    per unit ({isWholesaleMode ? 'Wholesale Price' : 'Retail Price'})
+                    per unit ({isWholesaleMode ? 'Wholesale Price' : (hasDiscount ? 'Special Discount Price' : 'Retail Price')})
                   </span>
                 </div>
 
@@ -202,8 +218,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     Retail MSRP: ₹{product.retail_price.toLocaleString('en-IN')} (Save ₹{(product.retail_price - product.wholesale_price).toLocaleString('en-IN')}/unit)
                   </div>
                 ) : (
-                  <div className="text-xs text-[#D4A017] mt-0.5">
-                    Wholesale Available at ₹{product.wholesale_price.toLocaleString('en-IN')} (MOQ: {product.min_wholesale_qty} pcs)
+                  <div className="text-xs text-[#D4A017] mt-0.5 flex items-center gap-2">
+                    <span>Wholesale Available at ₹{product.wholesale_price.toLocaleString('en-IN')} (MOQ: {product.min_wholesale_qty} pcs)</span>
+                    {hasDiscount && (
+                      <span className="text-emerald-400 font-semibold">• You save ₹{(product.retail_price - Number(product.discount_price)).toLocaleString('en-IN')} on retail!</span>
+                    )}
                   </div>
                 )}
               </div>

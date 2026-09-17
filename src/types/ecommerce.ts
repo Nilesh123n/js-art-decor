@@ -16,6 +16,7 @@ export interface Product {
   product_type: ProductType;
   sales_availability: SalesAvailability;
   retail_price: number;
+  discount_price?: number;
   wholesale_price: number;
   stock_quantity: number;
   min_wholesale_qty: number;

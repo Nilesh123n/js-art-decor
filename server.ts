@@ -331,6 +331,7 @@ async function startServer() {
             product_type VARCHAR(50) NOT NULL DEFAULT 'HOME DECOR',
             sales_availability VARCHAR(50) NOT NULL DEFAULT 'Both',
             retail_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            discount_price DECIMAL(10,2) NULL DEFAULT NULL,
             wholesale_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             stock_quantity INT NOT NULL DEFAULT 0,
             min_wholesale_qty INT NOT NULL DEFAULT 10,
@@ -346,15 +347,22 @@ async function startServer() {
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
 
+        try {
+          await mysqlPool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_price DECIMAL(10,2) NULL DEFAULT NULL AFTER retail_price;`);
+        } catch {
+          // Ignore if column already exists or MySQL syntax requires different alter
+        }
+
         for (const p of productsDb) {
           const imagesJson = JSON.stringify(Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []));
+          const discountVal = p.discount_price !== undefined && p.discount_price !== null && !isNaN(Number(p.discount_price)) && Number(p.discount_price) > 0 ? Number(p.discount_price) : null;
           await mysqlPool.query(
             `INSERT INTO products (
               id, name, slug, sku, description, short_description,
               production_type, segment, product_type, sales_availability,
-              retail_price, wholesale_price, stock_quantity, min_wholesale_qty,
+              retail_price, discount_price, wholesale_price, stock_quantity, min_wholesale_qty,
               size, material, color, images, is_featured, is_new_arrival, is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
               name = VALUES(name),
               slug = VALUES(slug),
@@ -366,6 +374,7 @@ async function startServer() {
               product_type = VALUES(product_type),
               sales_availability = VALUES(sales_availability),
               retail_price = VALUES(retail_price),
+              discount_price = VALUES(discount_price),
               wholesale_price = VALUES(wholesale_price),
               stock_quantity = VALUES(stock_quantity),
               min_wholesale_qty = VALUES(min_wholesale_qty),
@@ -389,6 +398,7 @@ async function startServer() {
               p.product_type || "HOME DECOR",
               p.sales_availability || "Both",
               Number(p.retail_price) || 0,
+              discountVal,
               Number(p.wholesale_price) || 0,
               Number(p.stock_quantity) || 0,
               Number(p.min_wholesale_qty) || 10,
@@ -668,6 +678,7 @@ async function startServer() {
           product_type: r.product_type || "HOME DECOR",
           sales_availability: r.sales_availability || "Both",
           retail_price: Number(r.retail_price) || 0,
+          discount_price: r.discount_price !== null && r.discount_price !== undefined && !isNaN(Number(r.discount_price)) && Number(r.discount_price) > 0 ? Number(r.discount_price) : undefined,
           wholesale_price: Number(r.wholesale_price) || 0,
           stock_quantity: Number(r.stock_quantity) || 0,
           min_wholesale_qty: Number(r.min_wholesale_qty) || 10,
@@ -1427,6 +1438,7 @@ async function startServer() {
         product_type: body.product_type || "HOME DECOR",
         sales_availability: body.sales_availability || "Both",
         retail_price: Number(body.retail_price) || 0,
+        discount_price: body.discount_price !== undefined && body.discount_price !== null && !isNaN(Number(body.discount_price)) && Number(body.discount_price) > 0 ? Number(body.discount_price) : undefined,
         wholesale_price: Number(body.wholesale_price) || 0,
         stock_quantity: Number(body.stock_quantity) || 0,
         min_wholesale_qty: Number(body.min_wholesale_qty) || 10,
@@ -1476,6 +1488,7 @@ async function startServer() {
         id: targetId,
         images: Array.isArray(images) ? images : (images ? [images] : []),
         retail_price: body.retail_price !== undefined ? Number(body.retail_price) : productsDb[idx].retail_price,
+        discount_price: body.discount_price !== undefined ? (Number(body.discount_price) > 0 ? Number(body.discount_price) : undefined) : productsDb[idx].discount_price,
         wholesale_price: body.wholesale_price !== undefined ? Number(body.wholesale_price) : productsDb[idx].wholesale_price,
         stock_quantity: body.stock_quantity !== undefined ? Number(body.stock_quantity) : productsDb[idx].stock_quantity,
         min_wholesale_qty: body.min_wholesale_qty !== undefined ? Number(body.min_wholesale_qty) : productsDb[idx].min_wholesale_qty,

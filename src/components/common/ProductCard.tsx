@@ -18,9 +18,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [addedAnimation, setAddedAnimation] = useState(false);
 
-  const displayPrice = mode === 'Wholesale' ? product.wholesale_price : product.retail_price;
   const isWholesaleMode = mode === 'Wholesale';
   const minQty = isWholesaleMode ? product.min_wholesale_qty : 1;
+  const hasDiscount = !isWholesaleMode && !!product.discount_price && Number(product.discount_price) > 0 && Number(product.discount_price) < Number(product.retail_price);
+  const effectivePrice = isWholesaleMode 
+    ? product.wholesale_price 
+    : (hasDiscount ? Number(product.discount_price) : product.retail_price);
+  const discountPercent = hasDiscount ? Math.round(((product.retail_price - Number(product.discount_price)) / product.retail_price) * 100) : 0;
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -100,10 +104,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {product.product_type || product.category || 'Home Decor'}
           </div>
 
-          <div className="pt-1.5 flex items-baseline justify-between">
-            <div className="text-xs sm:text-sm font-bold font-sans text-[#E5B842]">
-              ₹{displayPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="pt-1.5 flex items-baseline justify-between gap-1 flex-wrap">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-xs sm:text-sm font-bold font-sans text-[#E5B842]">
+                ₹{effectivePrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              {hasDiscount && (
+                <span className="text-[10px] text-neutral-400 line-through">
+                  ₹{product.retail_price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              )}
             </div>
+            {hasDiscount && (
+              <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-1.5 py-0.5 rounded">
+                {discountPercent}% OFF
+              </span>
+            )}
           </div>
         </div>
       </div>

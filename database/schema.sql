@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `product_type` VARCHAR(50) NOT NULL DEFAULT 'Bedsheet',
   `sales_availability` VARCHAR(50) NOT NULL DEFAULT 'Both',
   `retail_price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `discount_price` DECIMAL(10,2) NULL DEFAULT NULL,
   `wholesale_price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `stock_quantity` INT NOT NULL DEFAULT 0,
   `min_wholesale_qty` INT NOT NULL DEFAULT 10,

@@ -174,7 +174,10 @@ export default function App() {
     );
 
     let updatedCart = [...cart];
-    const unitPrice = pricingType === 'Wholesale' ? product.wholesale_price : product.retail_price;
+    const hasDiscount = pricingType === 'Retail' && !!product.discount_price && Number(product.discount_price) > 0 && Number(product.discount_price) < Number(product.retail_price);
+    const unitPrice = pricingType === 'Wholesale' 
+      ? product.wholesale_price 
+      : (hasDiscount ? Number(product.discount_price) : product.retail_price);
 
     if (existingIndex > -1) {
       updatedCart[existingIndex].quantity += quantity;

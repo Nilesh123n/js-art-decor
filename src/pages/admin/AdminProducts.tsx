@@ -112,6 +112,24 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
     e.preventDefault();
     if (!editingProduct || !editingProduct.name) return;
 
+    // Validate discount price if retail mode is selected
+    const isRetail = !editingProduct.sales_availability || editingProduct.sales_availability === 'Both' || editingProduct.sales_availability === 'Retail';
+    const regPrice = Number(editingProduct.retail_price) || 0;
+    const discPrice = editingProduct.discount_price !== undefined && editingProduct.discount_price !== null && !isNaN(Number(editingProduct.discount_price)) && Number(editingProduct.discount_price) > 0
+      ? Number(editingProduct.discount_price)
+      : null;
+
+    if (discPrice !== null && isRetail) {
+      if (regPrice <= 0) {
+        setError('Please set a Regular Retail Price before setting a Discount Price.');
+        return;
+      }
+      if (discPrice >= regPrice) {
+        setError(`Discount Price (₹${discPrice}) must be lower than Regular Retail Price (₹${regPrice}).`);
+        return;
+      }
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -125,11 +143,15 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
         ...editingProduct, 
         slug,
         images: validImages,
+        sales_availability: editingProduct.sales_availability || 'Both',
         retail_price: Number(editingProduct.retail_price) || 0,
+        discount_price: isRetail && discPrice ? discPrice : undefined,
         wholesale_price: Number(editingProduct.wholesale_price) || 0,
         stock_quantity: Number(editingProduct.stock_quantity) || 0,
         min_wholesale_qty: Number(editingProduct.min_wholesale_qty) || 1,
-        is_active: editingProduct.is_active !== undefined ? editingProduct.is_active : true
+        is_active: editingProduct.is_active !== undefined ? editingProduct.is_active : true,
+        is_featured: !!editingProduct.is_featured,
+        is_new_arrival: editingProduct.is_new_arrival !== undefined ? !!editingProduct.is_new_arrival : true
       };
 
       if (editingProduct.id) {
@@ -238,7 +260,20 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
                   </td>
 
                   <td className="p-3.5 font-mono">
-                    <div className="font-bold text-neutral-900">₹{p.retail_price.toLocaleString('en-IN')} (Retail)</div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {p.discount_price && Number(p.discount_price) > 0 && Number(p.discount_price) < Number(p.retail_price) ? (
+                        <>
+                          <span className="font-bold text-emerald-800">₹{Number(p.discount_price).toLocaleString('en-IN')}</span>
+                          <span className="text-[10px] text-neutral-400 line-through">₹{p.retail_price.toLocaleString('en-IN')}</span>
+                          <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1 rounded">
+                            {Math.round(((p.retail_price - Number(p.discount_price)) / p.retail_price) * 100)}% OFF
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-bold text-neutral-900">₹{p.retail_price.toLocaleString('en-IN')}</span>
+                      )}
+                      <span className="text-[10px] text-neutral-500 font-sans">(Retail)</span>
+                    </div>
                     <div className="text-[11px] text-amber-700 font-bold">₹{p.wholesale_price.toLocaleString('en-IN')} (Wholesale)</div>
                   </td>
 
@@ -298,198 +333,444 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
               </div>
             )}
 
-            <form onSubmit={handleSaveModal} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-neutral-700 mb-1">Product Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingProduct.name || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
-                  />
-                </div>
+            {(() => {
+              const isRetailSelected = !editingProduct.sales_availability || editingProduct.sales_availability === 'Both' || editingProduct.sales_availability === 'Retail';
+              const isWholesaleSelected = !editingProduct.sales_availability || editingProduct.sales_availability === 'Both' || editingProduct.sales_availability === 'Wholesale';
+              const hasRetailPrice = isRetailSelected && Number(editingProduct.retail_price) > 0;
+              const isDiscountFieldEnabled = isRetailSelected && hasRetailPrice;
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">SKU Code *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingProduct.sku || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
-                  />
-                </div>
+              const retailPriceNum = Number(editingProduct.retail_price) || 0;
+              const discountPriceNum = (editingProduct.discount_price !== undefined && editingProduct.discount_price !== null && !isNaN(Number(editingProduct.discount_price))) 
+                ? Number(editingProduct.discount_price) 
+                : 0;
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Production Type</label>
-                  <select
-                    value={editingProduct.production_type || 'Handmade'}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, production_type: e.target.value as ProductionType })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
-                  >
-                    <option value="Handmade">Handmade</option>
-                    <option value="Factory">Factory</option>
-                  </select>
-                </div>
+              const hasValidDiscount = isDiscountFieldEnabled && discountPriceNum > 0 && discountPriceNum < retailPriceNum;
+              const isDiscountInvalid = isDiscountFieldEnabled && discountPriceNum > 0 && discountPriceNum >= retailPriceNum;
+              const discountPercent = hasValidDiscount ? Math.round(((retailPriceNum - discountPriceNum) / retailPriceNum) * 100) : 0;
+              const discountSavings = hasValidDiscount ? retailPriceNum - discountPriceNum : 0;
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Segment</label>
-                  <select
-                    value={editingProduct.segment || 'Home'}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, segment: e.target.value as Segment })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
-                  >
-                    <option value="Home">Home</option>
-                    <option value="Hotel">Hotel</option>
-                    <option value="Event">Event</option>
-                  </select>
-                </div>
+              return (
+                <form onSubmit={handleSaveModal} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-neutral-800 mb-1">Product Title *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingProduct.name || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
+                        placeholder="e.g. Royal Handblock Printed Bedcover Set"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Product Type / Category</label>
-                  <select
-                    value={editingProduct.product_type || 'HOME DECOR'}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, product_type: e.target.value as ProductType })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-semibold"
-                  >
-                    <option value="HOME DECOR">HOME DECOR</option>
-                    <option value="ART DECOR">ART DECOR</option>
-                    <option value="ELECTRIC DECOR">ELECTRIC DECOR</option>
-                  </select>
-                </div>
+                    <div>
+                      <label className="block font-bold text-neutral-800 mb-1">SKU Code *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingProduct.sku || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-mono"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Retail Price (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editingProduct.retail_price || 0}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, retail_price: Number(e.target.value) })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-mono"
-                  />
-                </div>
+                    <div>
+                      <label className="block font-bold text-neutral-800 mb-1">Sales Availability / Channel *</label>
+                      <select
+                        value={editingProduct.sales_availability || 'Both'}
+                        onChange={(e) => {
+                          const val = e.target.value as SalesAvailability;
+                          setEditingProduct({ 
+                            ...editingProduct, 
+                            sales_availability: val,
+                            // If user selects Wholesale only, clear discount price
+                            discount_price: val === 'Wholesale' ? undefined : editingProduct.discount_price
+                          });
+                        }}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-semibold"
+                      >
+                        <option value="Both">Both (Retail & Wholesale)</option>
+                        <option value="Retail">Retail Only (Direct to Consumer)</option>
+                        <option value="Wholesale">Wholesale Only (B2B Bulk)</option>
+                      </select>
+                    </div>
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Wholesale Price (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editingProduct.wholesale_price || 0}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, wholesale_price: Number(e.target.value) })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-mono"
-                  />
-                </div>
+                    <div>
+                      <label className="block font-bold text-neutral-800 mb-1">Production Type</label>
+                      <select
+                        value={editingProduct.production_type || 'Handmade'}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, production_type: e.target.value as ProductionType })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
+                      >
+                        <option value="Handmade">Handmade</option>
+                        <option value="Factory">Factory</option>
+                      </select>
+                    </div>
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Stock Quantity *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editingProduct.stock_quantity || 0}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, stock_quantity: Number(e.target.value) })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-mono"
-                  />
-                </div>
+                    <div>
+                      <label className="block font-bold text-neutral-800 mb-1">Segment</label>
+                      <select
+                        value={editingProduct.segment || 'Home'}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, segment: e.target.value as Segment })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
+                      >
+                        <option value="Home">Home</option>
+                        <option value="Hotel">Hotel</option>
+                        <option value="Event">Event</option>
+                      </select>
+                    </div>
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Min Wholesale MOQ (Pcs) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editingProduct.min_wholesale_qty || 1}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, min_wholesale_qty: Number(e.target.value) })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-mono"
-                  />
-                </div>
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-neutral-800 mb-1">Product Type / Category</label>
+                      <select
+                        value={editingProduct.product_type || 'HOME DECOR'}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, product_type: e.target.value as ProductType })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-semibold"
+                      >
+                        <option value="HOME DECOR">HOME DECOR</option>
+                        <option value="ART DECOR">ART DECOR</option>
+                        <option value="ELECTRIC DECOR">ELECTRIC DECOR</option>
+                      </select>
+                    </div>
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Dimensions / Size</label>
-                  <input
-                    type="text"
-                    value={editingProduct.size || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, size: e.target.value })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
-                  />
-                </div>
+                    {/* PRICING & DISCOUNT SECTION */}
+                    <div className="sm:col-span-2 bg-neutral-50/70 border border-neutral-200 rounded-xl p-3.5 space-y-3">
+                      <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                        <span className="font-bold text-neutral-900 text-xs uppercase tracking-wide">
+                          Pricing & Retail Discount
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          isRetailSelected ? 'bg-amber-100 text-amber-800' : 'bg-neutral-200 text-neutral-600'
+                        }`}>
+                          {editingProduct.sales_availability === 'Wholesale' 
+                            ? 'Wholesale Mode Only' 
+                            : editingProduct.sales_availability === 'Retail'
+                            ? 'Retail Mode Only'
+                            : 'Retail & Wholesale Mode'}
+                        </span>
+                      </div>
 
-                <div>
-                  <label className="block font-bold text-neutral-700 mb-1">Material Composition</label>
-                  <input
-                    type="text"
-                    value={editingProduct.material || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
-                  />
-                </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {/* Regular Retail Price */}
+                        <div className={`p-3 rounded-lg border transition ${
+                          isRetailSelected ? 'bg-white border-neutral-300' : 'bg-neutral-100 border-neutral-200 opacity-60'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="font-bold text-neutral-900">
+                              Regular Retail Price (₹) {isRetailSelected && '*'}
+                            </label>
+                            {!isRetailSelected && (
+                              <span className="text-[10px] text-neutral-500 font-semibold">(Wholesale Only)</span>
+                            )}
+                          </div>
+                          <input
+                            type="number"
+                            required={isRetailSelected}
+                            disabled={!isRetailSelected}
+                            placeholder={isRetailSelected ? "e.g. 2499" : "Wholesale only"}
+                            value={editingProduct.retail_price ?? 0}
+                            onChange={(e) => {
+                              const newRetail = Number(e.target.value);
+                              setEditingProduct({ 
+                                ...editingProduct, 
+                                retail_price: newRetail,
+                                // If retail price cleared or 0, clear discount price as well
+                                discount_price: newRetail <= 0 ? undefined : editingProduct.discount_price 
+                              });
+                            }}
+                            className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2 text-neutral-900 font-mono text-sm font-semibold disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                          />
+                          <p className="text-[10px] text-neutral-500 mt-1">
+                            {isRetailSelected ? 'Standard printed MRP shown to retail buyers.' : 'Disabled because Wholesale Only is selected.'}
+                          </p>
+                        </div>
 
-                <div className="sm:col-span-2">
-                  <ImageKitUploader
-                    value={editingProduct.images?.[0] || ''}
-                    onChange={(url) =>
-                      setEditingProduct({
-                        ...editingProduct,
-                        images: [url, ...(editingProduct.images || []).slice(1)]
-                      })
-                    }
-                    label="Main Product Image (ImageKit CDN) *"
-                    folder="/jsartdecor/products"
-                    hint="Uploaded directly to ImageKit CDN and saved to Hostinger MySQL products table."
-                  />
-                </div>
+                        {/* Retail Discount Price Field - ONLY ENABLED WHEN RETAIL IS SELECTED & RETAIL PRICE > 0 */}
+                        <div className={`p-3 rounded-lg border transition-all ${
+                          isDiscountFieldEnabled 
+                            ? 'bg-emerald-50/60 border-emerald-300 shadow-xs' 
+                            : 'bg-neutral-100/90 border-neutral-200 opacity-65'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1 flex-wrap gap-1">
+                            <label className={`font-bold ${isDiscountFieldEnabled ? 'text-emerald-950' : 'text-neutral-500'}`}>
+                              Retail Discount Price (₹)
+                            </label>
+                            {hasValidDiscount && (
+                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 rounded">
+                                {discountPercent}% OFF (Save ₹{discountSavings.toLocaleString('en-IN')})
+                              </span>
+                            )}
+                          </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-neutral-700 mb-1">Full Description</label>
-                  <textarea
-                    rows={3}
-                    value={editingProduct.description || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
-                  />
-                </div>
-              </div>
+                          <input
+                            type="number"
+                            disabled={!isDiscountFieldEnabled}
+                            placeholder={
+                              !isRetailSelected 
+                                ? "Disabled (Wholesale Only)" 
+                                : !hasRetailPrice 
+                                ? "Enter Retail Price first" 
+                                : "e.g. 1999 (Special offer price)"
+                            }
+                            value={editingProduct.discount_price !== undefined ? editingProduct.discount_price : ''}
+                            onChange={(e) => {
+                              const val = e.target.value === '' ? undefined : Number(e.target.value);
+                              setEditingProduct({ ...editingProduct, discount_price: val });
+                            }}
+                            className={`w-full border rounded-lg p-2 font-mono text-sm font-semibold transition ${
+                              isDiscountFieldEnabled 
+                                ? 'bg-white border-emerald-400 text-neutral-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none' 
+                                : 'bg-neutral-100 border-neutral-300 text-neutral-400 cursor-not-allowed'
+                            }`}
+                          />
 
-              <div className="flex items-center gap-4 pt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editingProduct.is_active ?? true}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
-                    className="accent-neutral-900"
-                  />
-                  <span className="font-bold">Active in Catalog</span>
-                </label>
+                          <div className="text-[10px] mt-1.5 leading-tight">
+                            {!isRetailSelected ? (
+                              <span className="text-amber-800 font-medium">
+                                🔒 Field is locked. Select <strong>Retail</strong> or <strong>Both</strong> in Sales Availability to enable.
+                              </span>
+                            ) : !hasRetailPrice ? (
+                              <span className="text-neutral-600 font-medium">
+                                🔒 Enter a <strong>Regular Retail Price</strong> above to unlock this discount field.
+                              </span>
+                            ) : isDiscountInvalid ? (
+                              <span className="text-red-600 font-bold">
+                                ⚠️ Discount price (₹{discountPriceNum}) must be less than regular price (₹{retailPriceNum}).
+                              </span>
+                            ) : hasValidDiscount ? (
+                              <span className="text-emerald-800 font-semibold">
+                                ✓ Special price active! Retail buyers will pay ₹{discountPriceNum.toLocaleString('en-IN')} with ₹{retailPriceNum.toLocaleString('en-IN')} struck through.
+                              </span>
+                            ) : (
+                              <span className="text-neutral-500">
+                                Optional discounted offer price for retail customers. Leave empty if selling at regular price.
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editingProduct.is_featured ?? false}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, is_featured: e.target.checked })}
-                    className="accent-neutral-900"
-                  />
-                  <span className="font-bold">Featured on Home</span>
-                </label>
-              </div>
+                        {/* Wholesale Price */}
+                        <div className={`p-3 rounded-lg border transition ${
+                          isWholesaleSelected ? 'bg-white border-neutral-300' : 'bg-neutral-100 border-neutral-200 opacity-60'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="font-bold text-neutral-900">
+                              Wholesale Price (₹) {isWholesaleSelected && '*'}
+                            </label>
+                            {!isWholesaleSelected && (
+                              <span className="text-[10px] text-neutral-500 font-semibold">(Retail Only)</span>
+                            )}
+                          </div>
+                          <input
+                            type="number"
+                            required={isWholesaleSelected}
+                            disabled={!isWholesaleSelected}
+                            placeholder={isWholesaleSelected ? "e.g. 1299" : "Retail only"}
+                            value={editingProduct.wholesale_price ?? 0}
+                            onChange={(e) => setEditingProduct({ ...editingProduct, wholesale_price: Number(e.target.value) })}
+                            className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2 text-neutral-900 font-mono text-sm font-semibold disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                          />
+                          <p className="text-[10px] text-neutral-500 mt-1">
+                            B2B wholesale price per unit for bulk buyers.
+                          </p>
+                        </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-6 py-2 bg-neutral-900 text-white font-bold rounded-lg flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <span>Save Product</span>
-                </button>
-              </div>
-            </form>
+                        {/* Min Wholesale MOQ */}
+                        <div className={`p-3 rounded-lg border transition ${
+                          isWholesaleSelected ? 'bg-white border-neutral-300' : 'bg-neutral-100 border-neutral-200 opacity-60'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="font-bold text-neutral-900">
+                              Min Wholesale MOQ (Pcs) {isWholesaleSelected && '*'}
+                            </label>
+                            {!isWholesaleSelected && (
+                              <span className="text-[10px] text-neutral-500 font-semibold">(Retail Only)</span>
+                            )}
+                          </div>
+                          <input
+                            type="number"
+                            required={isWholesaleSelected}
+                            disabled={!isWholesaleSelected}
+                            placeholder={isWholesaleSelected ? "e.g. 10" : "Retail only"}
+                            value={editingProduct.min_wholesale_qty ?? 1}
+                            onChange={(e) => setEditingProduct({ ...editingProduct, min_wholesale_qty: Number(e.target.value) })}
+                            className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2 text-neutral-900 font-mono text-sm font-semibold disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                          />
+                          <p className="text-[10px] text-neutral-500 mt-1">
+                            Minimum bulk quantity required for B2B orders.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-neutral-800 mb-1">Stock Quantity *</label>
+                      <input
+                        type="number"
+                        required
+                        value={editingProduct.stock_quantity ?? 0}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, stock_quantity: Number(e.target.value) })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-mono font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-neutral-800 mb-1">Dimensions / Size</label>
+                      <input
+                        type="text"
+                        value={editingProduct.size || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, size: e.target.value })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
+                        placeholder="e.g. King Size (108 x 108 inches)"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-neutral-800 mb-1">Material Composition</label>
+                      <input
+                        type="text"
+                        value={editingProduct.material || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
+                        placeholder="e.g. 100% Pure Organic Cotton"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <ImageKitUploader
+                        value={editingProduct.images?.[0] || ''}
+                        onChange={(url) =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            images: [url, ...(editingProduct.images || []).slice(1)]
+                          })
+                        }
+                        label="Main Product Image (ImageKit CDN) *"
+                        folder="/jsartdecor/products"
+                        hint="Uploaded directly to ImageKit CDN and saved to Hostinger MySQL products table."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-neutral-800 mb-1">Full Description</label>
+                      <textarea
+                        rows={3}
+                        value={editingProduct.description || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
+                        placeholder="Detailed specifications, features, wash care instructions..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* CHECKBOXES SECTION - HIGH CONTRAST & FULLY VISIBLE TEXT LABELS */}
+                  <div className="pt-3 border-t border-neutral-200">
+                    <div className="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                      <span>Product Visibility & Display Badges</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Checkbox 1: Active in Catalog */}
+                      <label
+                        htmlFor="checkbox-is-active"
+                        className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer select-none transition-all ${
+                          editingProduct.is_active ?? true 
+                            ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950 shadow-xs' 
+                            : 'bg-neutral-50 border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                        }`}
+                      >
+                        <input
+                          id="checkbox-is-active"
+                          type="checkbox"
+                          checked={editingProduct.is_active ?? true}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
+                          className="mt-0.5 w-4 h-4 rounded border-neutral-400 text-emerald-600 accent-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+                        />
+                        <div className="leading-tight">
+                          <span className="block font-bold text-xs text-neutral-900">
+                            Active in Catalog
+                          </span>
+                          <span className="block text-[11px] text-neutral-600 mt-0.5">
+                            Visible to all customers across website
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Checkbox 2: Featured on Home */}
+                      <label
+                        htmlFor="checkbox-is-featured"
+                        className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer select-none transition-all ${
+                          editingProduct.is_featured ?? false 
+                            ? 'bg-amber-50/80 border-amber-300 text-amber-950 shadow-xs' 
+                            : 'bg-neutral-50 border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                        }`}
+                      >
+                        <input
+                          id="checkbox-is-featured"
+                          type="checkbox"
+                          checked={editingProduct.is_featured ?? false}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, is_featured: e.target.checked })}
+                          className="mt-0.5 w-4 h-4 rounded border-neutral-400 text-amber-600 accent-amber-600 focus:ring-amber-500 cursor-pointer shrink-0"
+                        />
+                        <div className="leading-tight">
+                          <span className="block font-bold text-xs text-neutral-900">
+                            Featured on Home
+                          </span>
+                          <span className="block text-[11px] text-neutral-600 mt-0.5">
+                            Showcase in curated homepage collection
+                          </span>
+                        </div>
+                      </label>
+
+                      {/* Checkbox 3: New Arrival Badge */}
+                      <label
+                        htmlFor="checkbox-is-new-arrival"
+                        className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer select-none transition-all ${
+                          editingProduct.is_new_arrival ?? true 
+                            ? 'bg-blue-50/80 border-blue-300 text-blue-950 shadow-xs' 
+                            : 'bg-neutral-50 border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                        }`}
+                      >
+                        <input
+                          id="checkbox-is-new-arrival"
+                          type="checkbox"
+                          checked={editingProduct.is_new_arrival ?? true}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, is_new_arrival: e.target.checked })}
+                          className="mt-0.5 w-4 h-4 rounded border-neutral-400 text-blue-600 accent-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
+                        />
+                        <div className="leading-tight">
+                          <span className="block font-bold text-xs text-neutral-900">
+                            New Arrival Badge
+                          </span>
+                          <span className="block text-[11px] text-neutral-600 mt-0.5">
+                            Displays vibrant 'NEW' tag on card
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex justify-end gap-2 border-t border-neutral-200">
+                    <button
+                      type="button"
+                      onClick={() => setModalOpen(false)}
+                      className="px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 font-bold hover:bg-neutral-100 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || isDiscountInvalid}
+                      className="px-6 py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-bold rounded-lg flex items-center gap-1.5 disabled:opacity-50 transition shadow-sm"
+                    >
+                      {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                      <span>Save Product to Database</span>
+                    </button>
+                  </div>
+                </form>
+              );
+            })()}
           </div>
         </div>
       )}
