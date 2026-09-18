@@ -18,6 +18,7 @@ if ($method === 'GET') {
         foreach ($products as &$p) {
             $p['images'] = !empty($p['images']) ? json_decode($p['images'], true) : [];
             $p['retail_price'] = (float)$p['retail_price'];
+            $p['discount_price'] = (!empty($p['discount_price']) && (float)$p['discount_price'] > 0) ? (float)$p['discount_price'] : null;
             $p['wholesale_price'] = (float)$p['wholesale_price'];
             $p['stock_quantity'] = (int)$p['stock_quantity'];
             $p['min_wholesale_qty'] = (int)$p['min_wholesale_qty'];
@@ -110,17 +111,18 @@ if ($method === 'POST') {
         $stmt = $pdo->prepare("
             INSERT INTO products (
                 name, slug, sku, description, short_description, segment, product_type, production_type,
-                sales_availability, retail_price, wholesale_price, min_wholesale_qty,
+                sales_availability, retail_price, discount_price, wholesale_price, min_wholesale_qty,
                 stock_quantity, size, material, color, is_featured, is_new_arrival, is_active, images, created_at, updated_at
             ) VALUES (
                 :name, :slug, :sku, :desc, :sdesc, :segment, :ptype, :prodtype,
-                :sales, :rprice, :wprice, :minwqty,
+                :sales, :rprice, :dprice, :wprice, :minwqty,
                 :stock, :size, :material, :color, :feat, :newarr, :active, :imgs, NOW(), NOW()
             )
         ");
 
         $images_json = is_array($input['images'] ?? null) ? json_encode($input['images']) : '[]';
         $slug = !empty($input['slug']) ? $input['slug'] : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $input['name'])));
+        $discount_price = (!empty($input['discount_price']) && (float)$input['discount_price'] > 0) ? (float)$input['discount_price'] : null;
 
         $stmt->execute([
             ':name' => trim($input['name']),
@@ -133,6 +135,7 @@ if ($method === 'POST') {
             ':prodtype' => $input['production_type'] ?? 'Handmade',
             ':sales' => $input['sales_availability'] ?? 'Both',
             ':rprice' => (float)$input['retail_price'],
+            ':dprice' => $discount_price,
             ':wprice' => (float)($input['wholesale_price'] ?? 0),
             ':minwqty' => (int)($input['min_wholesale_qty'] ?? 10),
             ':stock' => (int)($input['stock_quantity'] ?? 0),
@@ -165,12 +168,13 @@ if ($method === 'PUT') {
 
     try {
         $images_json = is_array($input['images'] ?? null) ? json_encode($input['images']) : '[]';
+        $discount_price = (isset($input['discount_price']) && (float)$input['discount_price'] > 0) ? (float)$input['discount_price'] : null;
 
         $stmt = $pdo->prepare("
             UPDATE products SET
                 name = :name, slug = :slug, sku = :sku, description = :desc, short_description = :sdesc,
                 segment = :segment, product_type = :ptype, production_type = :prodtype, sales_availability = :sales,
-                retail_price = :rprice, wholesale_price = :wprice, min_wholesale_qty = :minwqty,
+                retail_price = :rprice, discount_price = :dprice, wholesale_price = :wprice, min_wholesale_qty = :minwqty,
                 stock_quantity = :stock, size = :size, material = :material, color = :color,
                 is_featured = :feat, is_new_arrival = :newarr, is_active = :active, images = :imgs, updated_at = NOW()
             WHERE id = :id
@@ -188,6 +192,7 @@ if ($method === 'PUT') {
             ':prodtype' => $input['production_type'] ?? 'Handmade',
             ':sales' => $input['sales_availability'] ?? 'Both',
             ':rprice' => (float)$input['retail_price'],
+            ':dprice' => $discount_price,
             ':wprice' => (float)($input['wholesale_price'] ?? 0),
             ':minwqty' => (int)($input['min_wholesale_qty'] ?? 10),
             ':stock' => (int)($input['stock_quantity'] ?? 0),

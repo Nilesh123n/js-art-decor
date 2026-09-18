@@ -53,7 +53,7 @@ try {
             exit();
         }
 
-        $stmt = $pdo->prepare("SELECT id, name, sku, retail_price, wholesale_price, stock_quantity, min_wholesale_qty, sales_availability FROM products WHERE id = :id AND is_active = 1");
+        $stmt = $pdo->prepare("SELECT id, name, sku, retail_price, discount_price, wholesale_price, stock_quantity, min_wholesale_qty, sales_availability FROM products WHERE id = :id AND is_active = 1");
         $stmt->execute([':id' => $product_id]);
         $prod = $stmt->fetch();
 
@@ -83,7 +83,12 @@ try {
             exit();
         }
 
-        $unit_price = ($pricing_type === 'Wholesale') ? (float)$prod['wholesale_price'] : (float)$prod['retail_price'];
+        if ($pricing_type === 'Wholesale') {
+            $unit_price = (float)$prod['wholesale_price'];
+        } else {
+            $has_discount = !empty($prod['discount_price']) && (float)$prod['discount_price'] > 0 && (float)$prod['discount_price'] < (float)$prod['retail_price'];
+            $unit_price = $has_discount ? (float)$prod['discount_price'] : (float)$prod['retail_price'];
+        }
         $item_subtotal = round($unit_price * $qty, 2);
         $calculated_subtotal += $item_subtotal;
 

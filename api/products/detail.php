@@ -33,6 +33,7 @@ try {
     $p['id'] = (int)$p['id'];
     $p['images'] = !empty($p['images']) ? json_decode($p['images'], true) : [];
     $p['retail_price'] = (float)$p['retail_price'];
+    $p['discount_price'] = (!empty($p['discount_price']) && (float)$p['discount_price'] > 0) ? (float)$p['discount_price'] : null;
     $p['wholesale_price'] = (float)$p['wholesale_price'];
     $p['stock_quantity'] = (int)$p['stock_quantity'];
     $p['min_wholesale_qty'] = (int)$p['min_wholesale_qty'];
