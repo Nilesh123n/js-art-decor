@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+Disallow: /?view=admin-portal
+Disallow: /?view=admin-login
+Disallow: /api/admin/
+
+Sitemap: https://jsartanddecor.com/sitemap.xml
+
+# LLM Crawler context
+# Reference: https://llmstxt.org
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+

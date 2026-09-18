@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Layers, ArrowRight, Sparkles, Home, Building2, Calendar, Check, Filter } from 'lucide-react';
 import { Product } from '../types/ecommerce';
 import { ProductCard } from '../components/common/ProductCard';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getBreadcrumbSchema, getItemListSchema } from '../utils/seo';
 
 interface WholesaleTreePageProps {
   products: Product[];
@@ -30,6 +32,18 @@ export const WholesaleTreePage: React.FC<WholesaleTreePageProps> = ({
 
   return (
     <div id="wholesale-tree-view" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 min-h-screen text-white">
+      <SEOHead
+        title="B2B Wholesale Category Tree & Hierarchy - JSArt&Decor"
+        description="Filter directly through Handmade vs Factory pipelines, Home vs Hotel vs Event segments, and view wholesale tier MOQs."
+        type="website"
+        schemas={[
+          getItemListSchema(filteredProducts, 'B2B Wholesale Products Matrix'),
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Wholesale B2B Tree', url: '/?view=wholesale-tree' }
+          ])
+        ]}
+      />
       {/* Page Header */}
       <div className="bg-[#0A0A0A] text-white p-8 rounded-2xl border border-[#D4A017] shadow-[0_0_20px_rgba(212,160,23,0.2)] space-y-4">
         <div className="inline-flex items-center gap-2 bg-[#1A1500] text-[#E5B842] border border-[#D4A017]/60 px-3 py-1 rounded-full text-xs font-semibold">

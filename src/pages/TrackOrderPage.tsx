@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { SiteSettings, OrderTrackingData } from '../types/ecommerce';
 import { ApiService } from '../services/api';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getBreadcrumbSchema } from '../utils/seo';
 
 interface TrackOrderPageProps {
   orderId?: string | number;
@@ -103,6 +105,23 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({ orderId, setting
 
   return (
     <div id="track-order-view" className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 min-h-screen text-white">
+      <SEOHead
+        title="Track Order Status & Live Courier Shipment - JSArt&Decor"
+        description="Check real-time delivery status, courier AWB tracking, and fulfillment milestones for your JSArt&Decor bedsheet and textile order."
+        type="website"
+        schemas={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'ItemPage',
+            name: 'Order Tracking & Delivery Status',
+            description: 'Real-time order milestone tracking for JSArt&Decor customers'
+          },
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Track Order', url: '/?view=track-order' }
+          ])
+        ]}
+      />
       {/* Top Header & Breadcrumb */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#D4A017]/30 pb-4">
         <div>

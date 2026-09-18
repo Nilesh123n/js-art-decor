@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ShoppingBag, ArrowLeft, CheckCircle2, ShieldCheck, Truck, MessageCircle, AlertCircle, Sparkles, Layers, Feather, Droplets, Info } from 'lucide-react';
 import { Product, SiteSettings } from '../types/ecommerce';
 import { ProductCarousel } from '../components/common/ProductCarousel';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getProductSchema, getBreadcrumbSchema } from '../utils/seo';
 
 interface ProductDetailPageProps {
   product: Product;
@@ -118,6 +120,21 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
   return (
     <div id="product-detail-view" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-12 min-h-screen text-white">
+      <SEOHead
+        title={`${product.name} - Buy Pure Cotton Handblock Print Online`}
+        description={product.short_description || product.description || `Buy ${product.name} crafted in Jaipur. SKU: ${product.sku}. Available for retail purchase & B2B wholesale.`}
+        image={product.images?.[0]}
+        type="product"
+        schemas={[
+          getProductSchema(product),
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Catalog', url: '/?view=catalog' },
+            { name: product.product_type || 'Products', url: `/?view=catalog&category=${encodeURIComponent(product.product_type || '')}` },
+            { name: product.name, url: `/?product=${product.id}` }
+          ])
+        ]}
+      />
       {/* Back Breadcrumb */}
       <div className="flex items-center justify-between">
         <button

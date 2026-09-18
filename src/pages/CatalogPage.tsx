@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Search, SlidersHorizontal, X, ArrowUpDown, Filter, RotateCcw } from 'lucide-react';
 import { Product, ProductionType, Segment, ProductType } from '../types/ecommerce';
 import { ProductCard } from '../components/common/ProductCard';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getItemListSchema, getBreadcrumbSchema } from '../utils/seo';
 
 interface CatalogPageProps {
   products: Product[];
@@ -71,6 +73,18 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
 
   return (
     <div id="catalog-page-container" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 min-h-screen text-white space-y-6">
+      <SEOHead
+        title={mode === 'Wholesale' ? 'B2B Wholesale Catalog - Jaipur Bedsheets & Home Decor' : 'Catalog - Handcrafted Bedsheets, Textiles & Art Decor'}
+        description={`Browse our premium catalog of ${processedProducts.length} Jaipur block print bedsheets, handmade fabrics, hotel linens, and art decor with direct factory pricing.`}
+        type="website"
+        schemas={[
+          getItemListSchema(processedProducts, `${mode === 'Wholesale' ? 'Wholesale Bulk' : 'Retail'} Collection`),
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Catalog', url: '/?view=catalog' }
+          ])
+        ]}
+      />
       {/* Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-[#D4A017]/30 gap-4">
         <div>

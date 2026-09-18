@@ -9,6 +9,15 @@ import { ProductCarousel } from '../components/common/ProductCarousel';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { ApiService } from '../services/api';
 import type { PlannerSegment } from '../components/planner/ArtDecorPlannerModal';
+import { SEOHead } from '../components/seo/SEOHead';
+import { 
+  getOrganizationSchema, 
+  getWebSiteSchema, 
+  getItemListSchema, 
+  getFAQSchema, 
+  getBreadcrumbSchema,
+  DEFAULT_STORE_FAQS 
+} from '../utils/seo';
 
 const ArtDecorPlannerModal = React.lazy(() => 
   import('../components/planner/ArtDecorPlannerModal').then(m => ({ default: m.ArtDecorPlannerModal }))
@@ -190,6 +199,21 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="bg-[#000000] text-white overflow-x-hidden font-sans min-h-screen">
+      <SEOHead
+        title="JSArt&Decor - Luxury Jaipur Bedsheets, Pure Cotton Textiles & Art Decor"
+        description="Manufacturer, Wholesaler and Retailer of premium Jaipur handblock print bedsheets, pure cotton linens, hospitality textiles and handcrafted home decor."
+        type="website"
+        schemas={[
+          getOrganizationSchema(settings),
+          getWebSiteSchema(settings),
+          getItemListSchema(
+            products.filter(p => p.is_active && (p.is_featured || p.is_new_arrival)).slice(0, 20),
+            "Featured Jaipur Handcrafted Luxury Collection"
+          ),
+          getFAQSchema(DEFAULT_STORE_FAQS),
+          getBreadcrumbSchema([{ name: 'Home', url: '/' }])
+        ]}
+      />
       {/* -------------------------------------------------- */}
       {/* 1. HERO SECTION (FULL BACKGROUND IMAGE + GOLDEN THEME) */}
       {/* -------------------------------------------------- */}

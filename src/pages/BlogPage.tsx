@@ -3,6 +3,8 @@ import { ArrowLeft, User, Calendar, Tag, BookOpen, X, Sparkles } from 'lucide-re
 import { Blog } from '../types/ecommerce';
 import { FormattedBlogContent } from '../components/blog/FormattedBlogContent';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getBlogPostingSchema, getBlogListSchema, getBreadcrumbSchema } from '../utils/seo';
 
 interface BlogPageProps {
   blogs: Blog[];
@@ -17,6 +19,36 @@ export const BlogPage: React.FC<BlogPageProps> = ({ blogs, initialBlogId, onNavi
 
   return (
     <div id="blog-page-view" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 min-h-screen text-white">
+      {activeBlog ? (
+        <SEOHead
+          title={`${activeBlog.title} - Textile Insights`}
+          description={activeBlog.short_description || `Read about ${activeBlog.title} - expert textile and decor guide by JSArt&Decor.`}
+          image={activeBlog.featured_image}
+          type="article"
+          schemas={[
+            getBlogPostingSchema(activeBlog),
+            getBreadcrumbSchema([
+              { name: 'Home', url: '/' },
+              { name: 'Blogs & Insights', url: '/?view=blogs' },
+              { name: activeBlog.title, url: `/?blog=${activeBlog.id}` }
+            ])
+          ]}
+        />
+      ) : (
+        <SEOHead
+          title="Textile Knowledge & Jaipur Decor Insights - Official Blog"
+          description="Explore guides on thread count selection, Jaipur block-print preservation, luxury pure cotton bedsheets, and B2B hospitality decor trends."
+          type="website"
+          schemas={[
+            getBlogListSchema(blogs),
+            getBreadcrumbSchema([
+              { name: 'Home', url: '/' },
+              { name: 'Blogs & Insights', url: '/?view=blogs' }
+            ])
+          ]}
+        />
+      )}
+
       {/* Header */}
       <div className="border-b border-[#D4A017]/30 pb-4">
         <h1 className="text-2xl sm:text-4xl font-serif font-bold text-white">

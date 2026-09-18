@@ -2364,6 +2364,36 @@ async function startServer() {
     });
   });
 
+  // Sitemap.xml endpoint for search engine crawlers
+  app.get("/sitemap.xml", (req, res) => {
+    const sitemapPath = path.join(process.cwd(), "public", "sitemap.xml");
+    if (fs.existsSync(sitemapPath)) {
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      return res.sendFile(sitemapPath);
+    }
+    res.status(404).send("Sitemap not found");
+  });
+
+  // Robots.txt endpoint
+  app.get("/robots.txt", (req, res) => {
+    const robotsPath = path.join(process.cwd(), "public", "robots.txt");
+    if (fs.existsSync(robotsPath)) {
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      return res.sendFile(robotsPath);
+    }
+    res.status(404).send("Robots not found");
+  });
+
+  // llms.txt endpoint for AI agents and LLM web crawlers (https://llmstxt.org)
+  app.get(["/llms.txt", "/llm.txt"], (req, res) => {
+    const llmsPath = path.join(process.cwd(), "public", "llms.txt");
+    if (fs.existsSync(llmsPath)) {
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      return res.sendFile(llmsPath);
+    }
+    res.status(404).send("LLMs.txt not found");
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     try {

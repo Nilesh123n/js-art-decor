@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ArrowLeft, CreditCard, ShieldCheck, Truck, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { CartItem, OrderCustomer, PaymentMethod, SiteSettings } from '../types/ecommerce';
 import { ApiService } from '../services/api';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getBreadcrumbSchema } from '../utils/seo';
 
 declare global {
   interface Window {
@@ -202,6 +204,23 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   return (
     <div id="checkout-view" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 min-h-screen text-white">
+      <SEOHead
+        title="Secure Checkout - JSArt&Decor"
+        description="Encrypted 256-bit SSL secure checkout with Razorpay for JSArt&Decor luxury bedsheets and textiles."
+        type="website"
+        schemas={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'CheckoutPage',
+            name: 'Secure Order Checkout'
+          },
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Shopping Cart', url: '/?view=cart' },
+            { name: 'Checkout', url: '/?view=checkout' }
+          ])
+        ]}
+      />
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#D4A017]/30 pb-4">
         <div>

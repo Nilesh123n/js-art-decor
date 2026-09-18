@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Phone, Mail, MapPin, MessageSquare, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { SiteSettings } from '../types/ecommerce';
 import { ApiService } from '../services/api';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getLocalBusinessSchema, getBreadcrumbSchema } from '../utils/seo';
 
 interface ContactPageProps {
   settings: SiteSettings;
@@ -43,6 +45,18 @@ export const ContactPage: React.FC<ContactPageProps> = ({ settings, onNavigate }
 
   return (
     <div id="contact-us-view" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10 min-h-screen text-white">
+      <SEOHead
+        title="Contact Us & Wholesale Inquiry - JSArt&Decor Jaipur"
+        description="Connect with JSArt&Decor manufacturing team in Jaipur, Rajasthan for retail support, wholesale catalog orders, custom private label textiles and hotel supply."
+        type="website"
+        schemas={[
+          getLocalBusinessSchema(settings),
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Contact Us', url: '/?view=contact' }
+          ])
+        ]}
+      />
       {/* Title */}
       <div className="border-b border-[#D4A017]/30 pb-4">
         <h1 className="text-2xl sm:text-4xl font-serif font-bold text-white">Contact Us & Wholesale Inquiry</h1>

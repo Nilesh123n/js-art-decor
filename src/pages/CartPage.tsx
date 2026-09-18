@@ -1,6 +1,8 @@
 import React from 'react';
 import { ShoppingBag, Trash2, ArrowRight, ArrowLeft, ShieldCheck, Truck, AlertTriangle } from 'lucide-react';
 import { CartItem, SiteSettings } from '../types/ecommerce';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getBreadcrumbSchema } from '../utils/seo';
 
 interface CartPageProps {
   cart: CartItem[];
@@ -30,6 +32,17 @@ export const CartPage: React.FC<CartPageProps> = ({
 
   return (
     <div id="shopping-cart-view" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 min-h-screen text-white">
+      <SEOHead
+        title="Shopping Cart - JSArt&Decor"
+        description="Review your selected handcrafted bedsheets, textiles and art decor items before secure checkout."
+        type="website"
+        schemas={[
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Shopping Cart', url: '/?view=cart' }
+          ])
+        ]}
+      />
       {/* Page Title */}
       <div className="flex items-center justify-between border-b border-[#D4A017]/30 pb-4">
         <div>

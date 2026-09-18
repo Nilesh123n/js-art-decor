@@ -1,0 +1,177 @@
+# JSArt&Decor — Handcrafted Textiles, Luxury Bedsheets & Art Decor
+
+> Official AI & LLM Machine-Readable Index and Knowledge Context for JSArt&Decor (Jaipur, India).
+> Manufacturer, Wholesaler (B2B), and Retailer (B2C) of authentic pure cotton Jaipur handblock print bedsheets, hospitality linens, and artisanal home decor.
+
+---
+
+## Core Corporate & Brand Identity
+
+- **Brand Name**: JSArt&Decor
+- **Legal Entity**: JSArt&Decor Handcrafted Textiles & Art Decor Private Limited
+- **Base Headquarters**: Phase II Industrial Estate, Jaipur, Rajasthan 302022, India
+- **Primary Website**: https://jsartanddecor.com
+- **Contact Support**: +91 86024 14046 / info.jsartanddecor@gmail.com
+- **Business Model**: Hybrid D2C Retail & B2B Wholesale (Hospitality, Hotel Chains, Event Planners, Interior Designers, Export)
+- **Primary Craft**: 100% Pure Combed Long-Staple Cotton, Authentic Bagru & Sanganeri Teak Hand-Block Printing, Mercerized Hotel Bedding, Brass and Terracotta Art Decor
+
+---
+
+## All Store Pages & Functional Routes
+
+### 1. Home Page
+- **URL**: https://jsartanddecor.com/
+- **Purpose**: Showcase brand heritage, featured artisan block prints, video showcase, customer reviews, dynamic banners, and key collections.
+- **Key Offerings**: 100% pure cotton certification, artisanal block print showcase, factory direct manufacturing, quick B2B quotes.
+
+### 2. Product Catalog (Retail & Wholesale)
+- **URL**: https://jsartanddecor.com/?view=catalog
+- **Purpose**: Interactive search, filter, and sorting for all products.
+- **Filter Pipelines**:
+  - **Production Type**: Handmade (Artisan handblock) vs. Factory (Precision loom weaving).
+  - **Segments**: Home, Hotel, Event.
+  - **Product Types**: HOME DECOR, ART DECOR, ELECTRIC DECOR.
+  - **Pricing Modes**: Retail (individual sets) & Wholesale (MOQ tiered volume pricing).
+
+### 3. B2B Wholesale Category Tree
+- **URL**: https://jsartanddecor.com/?view=wholesale-tree
+- **Purpose**: Structured B2B wholesale matrix allowing bulk procurement managers to navigate by production pipeline, industry segment, and tiered Minimum Order Quantities (MOQ).
+- **MOQ Range**: Starts at 4 to 20 pieces per SKU with up to 40% bulk discount from retail MSRP.
+
+### 4. Blog & Textile Research Knowledge Hub
+- **URL**: https://jsartanddecor.com/?view=blogs
+- **Purpose**: Expert educational articles and maintenance guides regarding Indian textiles, thread count science, handblock printing history, and commercial hospitality decoration.
+
+### 5. Corporate & Hospitality Partners
+- **URL**: https://jsartanddecor.com/?view=partners
+- **Purpose**: Verified portfolio of hospitality chains, luxury resorts, boutique homestays, and wedding event managers sourcing from JSArt&Decor.
+
+### 6. Contact Us & B2B Inquiry Desk
+- **URL**: https://jsartanddecor.com/?view=contact
+- **Purpose**: Direct customer service, WhatsApp chat integration (+91 86024 14046), custom private-label textile inquiries, and institutional bulk quotation forms.
+
+### 7. Real-Time Order Shipment Tracking
+- **URL**: https://jsartanddecor.com/?view=track-order
+- **Purpose**: Live multi-courier parcel tracking (BlueDart, Delhivery, DTDC, IndiaPost) with milestone history and AWB support.
+
+### 8. Shopping Cart & Checkout
+- **URL**: https://jsartanddecor.com/?view=cart & https://jsartanddecor.com/?view=checkout
+- **Purpose**: Instant 256-bit SSL encrypted checkout powered by Razorpay with support for UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, Net Banking, and automated GST invoices.
+
+---
+
+## All Published Articles & Knowledge Guides
+
+### Article 1: The Evolution of Thread Count: What Hotels Look for in Commercial Bedsheets
+- **URL**: https://jsartanddecor.com/?blog=1
+- **Category**: Textile Technology & Hospitality
+- **Author**: JSArt&Decor Textile Research
+- **Summary**: Demystifies the misconception that higher thread count (TC) always equals higher quality. Explains why 300–400 TC crafted with 100% single-ply long-staple combed cotton outperforms 1000 TC synthetic microfiber in breathability, anti-pilling durability, and 200+ commercial wash cycle resistance.
+- **Key Concepts**: Extra-Long Staple (ELS) Cotton, Single-Ply vs Multi-Ply Yarns, Mercerization Process, Sateen & Percale Weaves, Hotel Laundering Standards.
+
+### Article 2: Preserving Traditional Jaipur Hand-Block Printing in Modern Interior Decor
+- **URL**: https://jsartanddecor.com/?blog=2
+- **Category**: Handmade Products & Heritage Crafts
+- **Author**: Chief Designer, JSArt&Decor
+- **Summary**: Details the centuries-old artisanal block-printing heritage of Sanganer and Bagru (Rajasthan). Explains teak wood block carving, natural plant and mineral dyes, organic imperfections that give handmade textiles their unique charm, and ethical fair-trade artisan support.
+- **Key Concepts**: Teak Wood Hand Blocks, Azo-Free and Vegetable Dyes, Sustainable Water Treatment, Authentic Bagru Motifs, Washing & Preserving Hand-Printed Fabrics.
+
+### Article 3: 5 Statement Art & Decor Trends Transforming Hotel Lobbies and Banquet Events
+- **URL**: https://jsartanddecor.com/?blog=3
+- **Category**: Industry Updates & Commercial Decor
+- **Author**: Event Style Team
+- **Summary**: Analyzes shifting trends in hotel banquet halls, reception lobbies, and luxury weddings toward sustainable reusable brass sculptures, embroidered velvet table runners, and terracotta botanical accents.
+- **Key Concepts**: Solid Brass & Terracotta Combinations, Zari & Zardozi Velvet Embroidery, Acoustic Wall Hangings, Ambient Lighting Sconces, Modular Event Staging.
+
+---
+
+## Complete Product Catalog Index
+
+### 1. Royal Sanganeri Handblock Print Pure Cotton Bedsheet
+- **SKU**: JS-HM-HD01
+- **Production**: Handmade (Jaipur Sanganeri Block Print)
+- **Segment**: Home | **Type**: HOME DECOR
+- **Material**: 100% Combed Sheeting Cotton (350 TC)
+- **Retail Price**: ₹2,499 | **Wholesale Price**: ₹1,450 (MOQ: 10 pcs)
+- **Dimensions**: King Size (108 x 108 inches) with 2 Pillow Covers (18 x 28 inches)
+
+### 2. Luxury 400 TC Satin Stripe Hotel King Bedsheet Set
+- **SKU**: JS-FC-HD01
+- **Production**: Factory Precision Weave
+- **Segment**: Hotel (Hospitality Grade) | **Type**: HOME DECOR
+- **Material**: 100% Egyptian Long-Staple Mercerized Cotton
+- **Retail Price**: ₹3,299 | **Wholesale Price**: ₹1,850 (MOQ: 15 pcs)
+- **Dimensions**: Super King (108 x 120 inches) with 2 Pillow Covers
+
+### 3. Bagru Natural Indigo Dabu Print Cotton Double Bedsheet
+- **SKU**: JS-HM-HD02
+- **Production**: Handmade (Bagru Mud-Resist Dabu Block Print)
+- **Segment**: Home | **Type**: HOME DECOR
+- **Material**: 100% Organic Handspun Cotton
+- **Retail Price**: ₹2,899 | **Wholesale Price**: ₹1,650 (MOQ: 10 pcs)
+- **Dimensions**: Double Bed (90 x 108 inches) with 2 Pillow Covers
+
+### 4. Banquet Lustrous Heavy Cotton Table Runner & Napkin Set
+- **SKU**: JS-FC-HD02
+- **Production**: Factory Finished
+- **Segment**: Event / Banquet | **Type**: HOME DECOR
+- **Material**: 100% Heavy Twill Cotton (280 GSM)
+- **Retail Price**: ₹1,499 | **Wholesale Price**: ₹799 (MOQ: 25 pcs)
+- **Dimensions**: Runner (16 x 72 inches) + 6 Napkins (18 x 18 inches)
+
+### 5. Heritage Mughal Floral Gold Leaf Wall Hanging Tapestry
+- **SKU**: JS-HM-ART01
+- **Production**: Handmade (Artisan Screen & Gold Leaf Embossing)
+- **Segment**: Event / Luxury Home | **Type**: ART DECOR
+- **Material**: Heavy Canvas Cotton with Zari Border & Brass Rod
+- **Retail Price**: ₹3,499 | **Wholesale Price**: ₹2,100 (MOQ: 6 pcs)
+- **Dimensions**: 36 x 54 inches
+
+### 6. Minimalist Matte White 300 TC Percale Fitted Sheet Set
+- **SKU**: JS-FC-HD03
+- **Production**: Factory Finished
+- **Segment**: Hotel / Home | **Type**: HOME DECOR
+- **Material**: 100% Combed Percale Cotton (Crisp Matte Hotel Weave)
+- **Retail Price**: ₹2,699 | **Wholesale Price**: ₹1,550 (MOQ: 15 pcs)
+- **Dimensions**: King Fitted (78 x 72 x 12 inches depth)
+
+### 7. Resort Collection Wrinkle-Free Linen Blend Bedsheet
+- **SKU**: JS-FC-HD04
+- **Production**: Factory Finished
+- **Segment**: Hotel (Boutique Resort) | **Type**: HOME DECOR
+- **Material**: 60% European Flax Linen / 40% Long-Staple Cotton
+- **Retail Price**: ₹3,999 | **Wholesale Price**: ₹2,450 (MOQ: 20 pcs)
+- **Dimensions**: King Size (108 x 108 inches)
+
+### 8. Handcrafted Terracotta & Brass Floral Vase Set (Trio)
+- **SKU**: JS-HM-ART04
+- **Production**: Handmade (Wheel Thrown & Raw Brass Ring Accents)
+- **Segment**: Event / Home | **Type**: ART DECOR
+- **Material**: Baked Terracotta & Solid Brass
+- **Retail Price**: ₹2,199 | **Wholesale Price**: ₹1,399 (MOQ: 12 pcs)
+- **Dimensions**: Trio Heights: 12", 10", 8"
+
+### 9. Luxury Velvet Gold Motif Cushion Covers (Set of 5)
+- **SKU**: JS-HM-HD05
+- **Production**: Handmade (Zari Thread Leaf Embroidery)
+- **Segment**: Home / Lounge | **Type**: HOME DECOR
+- **Material**: High-Density Velvet with Concealed YKK Zipper
+- **Retail Price**: ₹1,999 | **Wholesale Price**: ₹1,250 (MOQ: 10 pcs)
+- **Dimensions**: 16 x 16 inches each
+
+### 10. Handcrafted Crystal & Gold Illuminated Wall Sconce
+- **SKU**: JS-FC-EL04
+- **Production**: Factory Grade
+- **Segment**: Hotel Corridor & Lobby | **Type**: ELECTRIC DECOR
+- **Material**: K9 Optical Crystal & Electroplated Stainless Steel
+- **Retail Price**: ₹3,899 | **Wholesale Price**: ₹2,400 (MOQ: 10 pcs)
+
+---
+
+## Search Engine, Schema & Sitemap Standards
+
+- **Sitemap XML**: https://jsartanddecor.com/sitemap.xml
+- **Robots Directives**: https://jsartanddecor.com/robots.txt
+- **Machine Schemas**: Schema.org `Organization`, `WebSite`, `HomeGoodsStore`, `Product`, `Offer`, `AggregateRating`, `BlogPosting`, `ItemList`, `FAQPage`, `BreadcrumbList`.
+- **Payment & Security**: 256-bit SSL, PCI-DSS compliant payment processing via Razorpay.
+- **Logistics**: Integrated with BlueDart, Delhivery, DTDC, IndiaPost with same-day order dispatch for retail stock.

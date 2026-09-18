@@ -1,6 +1,8 @@
 import React from 'react';
 import { Building2, Award, ExternalLink, MessageCircle } from 'lucide-react';
 import { Partner, SiteSettings } from '../types/ecommerce';
+import { SEOHead } from '../components/seo/SEOHead';
+import { getBreadcrumbSchema } from '../utils/seo';
 
 interface PartnersPageProps {
   partners: Partner[];
@@ -11,6 +13,23 @@ interface PartnersPageProps {
 export const PartnersPage: React.FC<PartnersPageProps> = ({ partners, settings, onNavigate }) => {
   return (
     <div id="partners-page-view" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10 min-h-screen text-white">
+      <SEOHead
+        title="Hospitality & Retail B2B Partners - JSArt&Decor"
+        description="Explore JSArt&Decor institutional corporate clients, hotel chains, and retail partners across India sourcing authentic Jaipur textiles and decor."
+        type="website"
+        schemas={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'AboutPage',
+            name: 'JSArt&Decor Hospitality & Corporate Partners',
+            description: 'Institutional B2B supply, hotel linen manufacturing, and corporate decor collaborations.'
+          },
+          getBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Partners', url: '/?view=partners' }
+          ])
+        ]}
+      />
       {/* Page Title */}
       <div className="bg-[#0A0A0A] text-white p-8 rounded-2xl border border-[#D4A017] shadow-[0_0_20px_rgba(212,160,23,0.2)] space-y-3 text-center sm:text-left">
         <div className="inline-flex items-center gap-2 bg-[#1A1500] text-[#E5B842] border border-[#D4A017]/60 px-3 py-1 rounded-full text-xs font-semibold">
