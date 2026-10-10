@@ -24,6 +24,14 @@ import { Blog } from '../../types/ecommerce';
 import { ApiService } from '../../services/api';
 import { FormattedBlogContent } from '../../components/blog/FormattedBlogContent';
 import { ImageWithFallback } from '../../components/common/ImageWithFallback';
+import { getBlogImageUrl, compressImageFile } from '../../utils/imageHelper';
+
+const CURATED_BLOG_COVERS = [
+  { label: 'Jaipur Sanganeri Block Print', url: 'https://images.unsplash.com/photo-1606744837616-56c9a5c6a6eb?auto=format&fit=crop&w=1200&q=80' },
+  { label: 'Hotel Luxury Sateen Bedding', url: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80' },
+  { label: 'Artisanal Teak Wood Heritage', url: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80' },
+  { label: 'Hospitality Banquet & Decor', url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80' }
+];
 
 interface AdminBlogsProps {
   blogs: Blog[];
@@ -72,7 +80,7 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
     setEditingBlog({
       title: '',
       slug: '',
-      featured_image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80',
+      featured_image: '',
       short_description: '',
       full_content: `## The Heritage of Indian Weaves\n\nIndian textile history spans thousands of years. From the **delicate block prints of Jaipur** to the **rich weaves of Varanasi**, every piece tells a story of craftsmanship.\n\n### Essential Care Guidelines\n- Always wash in **cold water** with mild organic detergent\n- Dry in shade to maintain **vibrant botanical dye luster**\n- Iron on reverse side using low-medium heat\n\n> "True luxury lies in the patience of hand-guided looms and artisan heritage."\n\nDouble line break starts a new paragraph with comfortable spacing and optical contrast.`,
       category: 'Textile Guide',
@@ -104,27 +112,35 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
     }
   };
 
-  // Image Upload from User's Device / Computer
+  // Image Upload from User's Device / Computer (Smart Compression + Universal Fallback)
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please choose an image file (JPG, PNG, WEBP).');
-      return;
-    }
-
-    if (file.size > 8 * 1024 * 1024) {
-      alert('Image file is larger than 8MB. Please select an image under 8MB.');
+      alert('Please choose an image file (JPG, PNG, WEBP, etc.).');
       return;
     }
 
     setUploadingImage(true);
     try {
+      // 1. Instant client-side compression to widescreen 16:9 ~80-120KB
+      const compressed = await compressImageFile(file, 1280, 720, 0.85);
+
+      // 2. Set live local preview immediately so admin sees their image right away
+      setEditingBlog(prev => prev ? { ...prev, featured_image: compressed.dataUrl } : null);
+
+      // 3. Upload to server
       const uploadedUrl = await ApiService.uploadImage(file, file.name);
-      setEditingBlog(prev => prev ? { ...prev, featured_image: uploadedUrl } : null);
+
+      // 4. Update with server URL (or fallback data URI)
+      const finalUrl = uploadedUrl || compressed.dataUrl;
+      setEditingBlog(prev => prev ? { ...prev, featured_image: finalUrl } : null);
+      setSuccessMsg(`Cover image ready (${Math.round(compressed.sizeBytes / 1024)} KB)`);
+      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
-      alert('Upload failed: ' + (err.message || 'Could not upload image from system'));
+      console.warn('Upload error:', err);
+      // Fallback: If network upload fails, the compressed data URL is already set and 100% valid!
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) {
@@ -171,11 +187,15 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
         .replace(/(^-|-$)+/g, '');
 
       const newId = editingBlog?.id || (blogList.length > 0 ? Math.max(...blogList.map(b => b.id)) + 1 : 1);
+      
+      // Determine final image
+      const resolvedImg = getBlogImageUrl(editingBlog) || editingBlog?.featured_image || CURATED_BLOG_COVERS[0].url;
+
       const blogToSave: Blog = {
         id: newId,
         title,
         slug,
-        featured_image: editingBlog?.featured_image || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80',
+        featured_image: resolvedImg,
         short_description: editingBlog?.short_description || '',
         full_content: editingBlog?.full_content || '',
         category: editingBlog?.category || 'General',
@@ -183,6 +203,8 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
         status: (editingBlog?.status as any) || 'Published',
         created_at: editingBlog?.created_at || new Date().toISOString()
       };
+      // Mirror cover_image for full compatibility
+      (blogToSave as any).cover_image = resolvedImg;
 
       const idx = blogList.findIndex(b => b.id === blogToSave.id);
       let updated = [...blogList];
@@ -253,7 +275,7 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
             <div>
               <div className="aspect-[16/9] w-full overflow-hidden bg-neutral-100 border-b border-neutral-200">
                 <ImageWithFallback
-                  src={b.featured_image}
+                  src={getBlogImageUrl(b)}
                   alt={b.title}
                   className="w-full h-full object-cover"
                 />
@@ -379,7 +401,7 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
                 {/* 16:9 Image Preview */}
                 <div className="aspect-[16/9] w-full rounded-xl overflow-hidden bg-neutral-950 border border-[#D4A017]/40 shadow-md">
                   <ImageWithFallback
-                    src={editingBlog.featured_image}
+                    src={getBlogImageUrl(editingBlog)}
                     alt={editingBlog.title || 'Preview'}
                     className={`w-full h-full ${imageFit === 'cover' ? 'object-cover' : 'object-contain'} object-center`}
                   />
@@ -477,7 +499,7 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
                     <input
                       type="file"
                       ref={fileInputRef}
-                      accept="image/png,image/jpeg,image/webp,image/jpg"
+                      accept="image/*"
                       onChange={handleFileChange}
                       className="hidden"
                     />
@@ -491,25 +513,58 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
                       {uploadingImage ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                          <span>Uploading from Device...</span>
+                          <span>Optimizing & Uploading...</span>
                         </>
                       ) : (
                         <>
                           <UploadCloud className="w-4 h-4 text-amber-400" />
-                          <span>Upload Image from Computer</span>
+                          <span>Upload from Phone / Computer</span>
                         </>
                       )}
                     </button>
 
+                    {editingBlog.featured_image && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingBlog(prev => prev ? { ...prev, featured_image: '' } : null)}
+                        className="px-2.5 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-semibold transition"
+                      >
+                        Remove Image
+                      </button>
+                    )}
+
                     <div className="flex items-center gap-2 text-xs text-neutral-600">
-                      <span>or fit:</span>
+                      <span>fit:</span>
                       <button
                         type="button"
                         onClick={() => setImageFit(imageFit === 'cover' ? 'contain' : 'cover')}
                         className="px-2 py-1 bg-white border border-neutral-300 rounded font-medium text-[11px] hover:bg-neutral-50"
                       >
-                        {imageFit === 'cover' ? 'Fit: Cover' : 'Fit: Contain'}
+                        {imageFit === 'cover' ? 'Cover' : 'Contain'}
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Curated Authentic Jaipur Textile Presets */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="block text-[11px] font-semibold text-neutral-700">
+                      Or Pick Curated Jaipur Textile Cover:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {CURATED_BLOG_COVERS.map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setEditingBlog(prev => prev ? { ...prev, featured_image: preset.url } : null)}
+                          className={`text-left p-1.5 rounded-lg border text-[10px] transition truncate ${
+                            editingBlog.featured_image === preset.url
+                              ? 'border-amber-600 bg-amber-100/60 font-bold text-amber-900 ring-1 ring-amber-500'
+                              : 'border-neutral-200 hover:border-amber-400 bg-white text-neutral-700'
+                          }`}
+                        >
+                          <span className="truncate block">✦ {preset.label}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -528,24 +583,36 @@ export const AdminBlogs: React.FC<AdminBlogsProps> = ({ blogs, onRefreshBlogs })
                   </div>
 
                   {/* Live Image Fit Preview */}
-                  {editingBlog.featured_image && (
+                  {editingBlog.featured_image ? (
                     <div className="space-y-1 pt-1">
                       <div className="flex items-center justify-between text-[11px] text-neutral-500">
-                        <span>Image Preview (16:9 Ratio):</span>
-                        {editingBlog.featured_image.startsWith('/uploads/') && (
+                        <span>Image Preview (16:9 Aspect Ratio):</span>
+                        {editingBlog.featured_image.startsWith('data:image/') ? (
                           <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Uploaded from Device
+                            <CheckCircle2 className="w-3 h-3" /> Ready & Optimized for All Devices
+                          </span>
+                        ) : editingBlog.featured_image.startsWith('/uploads/') ? (
+                          <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Uploaded to Server Storage
+                          </span>
+                        ) : (
+                          <span className="text-blue-700 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> High-Resolution CDN Image
                           </span>
                         )}
                       </div>
 
                       <div className="relative aspect-[16/9] w-full rounded-lg overflow-hidden border border-neutral-300 bg-neutral-950">
                         <ImageWithFallback
-                          src={editingBlog.featured_image}
+                          src={getBlogImageUrl(editingBlog)}
                           alt="Featured Blog Preview"
                           className={`w-full h-full ${imageFit === 'cover' ? 'object-cover' : 'object-contain'} object-center`}
                         />
                       </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-neutral-100/70 border border-dashed border-neutral-300 rounded-lg text-center text-xs text-neutral-500">
+                      No cover image selected yet. Click &quot;Upload from Phone / Computer&quot; or select a curated cover above.
                     </div>
                   )}
                 </div>

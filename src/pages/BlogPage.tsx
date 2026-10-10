@@ -5,6 +5,7 @@ import { FormattedBlogContent } from '../components/blog/FormattedBlogContent';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { SEOHead } from '../components/seo/SEOHead';
 import { getBlogPostingSchema, getBlogListSchema, getBreadcrumbSchema } from '../utils/seo';
+import { getBlogImageUrl } from '../utils/imageHelper';
 
 interface BlogPageProps {
   blogs: Blog[];
@@ -23,7 +24,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ blogs, initialBlogId, onNavi
         <SEOHead
           title={`${activeBlog.title} - Textile Insights`}
           description={activeBlog.short_description || `Read about ${activeBlog.title} - expert textile and decor guide by JSArt&Decor.`}
-          image={activeBlog.featured_image}
+          image={getBlogImageUrl(activeBlog)}
           type="article"
           schemas={[
             getBlogPostingSchema(activeBlog),
@@ -95,7 +96,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ blogs, initialBlogId, onNavi
           {/* Featured Image with 16:9 Aspect Ratio and proper fit */}
           <div className="aspect-[16/9] w-full rounded-xl overflow-hidden bg-[#141414] border-2 border-[#D4A017] shadow-[0_0_15px_rgba(212,160,23,0.2)]">
             <ImageWithFallback 
-              src={activeBlog.featured_image} 
+              src={getBlogImageUrl(activeBlog)} 
               alt={activeBlog.title} 
               className="w-full h-full object-cover object-center" 
             />
@@ -125,7 +126,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ blogs, initialBlogId, onNavi
               <div>
                 <div className="aspect-[16/9] w-full overflow-hidden bg-[#141414] border-b border-[#D4A017]">
                   <ImageWithFallback 
-                    src={blog.featured_image} 
+                    src={getBlogImageUrl(blog)} 
                     alt={blog.title} 
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" 
                   />

@@ -9,13 +9,14 @@ $id = $_GET['id'] ?? null;
 
 function format_blog_data($b) {
     if (!$b) return null;
+    $img = $b['featured_image'] ?? $b['cover_image'] ?? $b['image_url'] ?? $b['image'] ?? '';
     return [
         "id" => (int)$b['id'],
         "title" => $b['title'],
         "slug" => $b['slug'],
         "category" => $b['category'] ?? 'Textile Guide',
-        "featured_image" => $b['featured_image'] ?? $b['cover_image'] ?? '',
-        "cover_image" => $b['cover_image'] ?? $b['featured_image'] ?? '',
+        "featured_image" => $img,
+        "cover_image" => $img,
         "short_description" => $b['short_description'] ?? $b['excerpt'] ?? '',
         "excerpt" => $b['excerpt'] ?? $b['short_description'] ?? '',
         "full_content" => $b['full_content'] ?? $b['content'] ?? '',

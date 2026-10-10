@@ -18,8 +18,9 @@ if ($method === 'GET') {
         foreach ($blogs as &$b) {
             $b['id'] = (int)$b['id'];
             $b['is_published'] = (bool)($b['is_published'] ?? ($b['status'] === 'Published'));
-            $b['featured_image'] = $b['featured_image'] ?? $b['cover_image'] ?? '';
-            $b['cover_image'] = $b['cover_image'] ?? $b['featured_image'] ?? '';
+            $img = $b['featured_image'] ?? $b['cover_image'] ?? $b['image_url'] ?? $b['image'] ?? '';
+            $b['featured_image'] = $img;
+            $b['cover_image'] = $img;
             $b['short_description'] = $b['short_description'] ?? $b['excerpt'] ?? '';
             $b['full_content'] = $b['full_content'] ?? $b['content'] ?? '';
             $b['category'] = $b['category'] ?? 'Textile Guide';
@@ -53,7 +54,7 @@ if ($action === 'create' || ($method === 'POST' && $action !== 'update' && $acti
                 $title = trim($b['title']);
                 $slug = !empty($b['slug']) ? trim($b['slug']) : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
                 $category = !empty($b['category']) ? trim($b['category']) : 'Textile Guide';
-                $featured_image = $b['featured_image'] ?? $b['cover_image'] ?? '';
+                $featured_image = $b['featured_image'] ?? $b['cover_image'] ?? $b['image_url'] ?? $b['image'] ?? '';
                 $short_description = $b['short_description'] ?? $b['excerpt'] ?? '';
                 $full_content = $b['full_content'] ?? $b['content'] ?? '';
                 $author = !empty($b['author']) ? trim($b['author']) : 'JSArt&Decor Editorial';
@@ -99,7 +100,7 @@ if ($action === 'create' || ($method === 'POST' && $action !== 'update' && $acti
         $title = trim($input['title']);
         $slug = !empty($input['slug']) ? trim($input['slug']) : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
         $category = !empty($input['category']) ? trim($input['category']) : 'Textile Guide';
-        $featured_image = $input['featured_image'] ?? $input['cover_image'] ?? '';
+        $featured_image = $input['featured_image'] ?? $input['cover_image'] ?? $input['image_url'] ?? $input['image'] ?? '';
         $short_description = $input['short_description'] ?? $input['excerpt'] ?? '';
         $full_content = $input['full_content'] ?? $input['content'] ?? '';
         $author = !empty($input['author']) ? trim($input['author']) : 'JSArt&Decor Editorial';
@@ -151,7 +152,7 @@ if ($action === 'update' || $method === 'PUT') {
         $title = trim($input['title']);
         $slug = !empty($input['slug']) ? trim($input['slug']) : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
         $category = !empty($input['category']) ? trim($input['category']) : 'Textile Guide';
-        $featured_image = $input['featured_image'] ?? $input['cover_image'] ?? '';
+        $featured_image = $input['featured_image'] ?? $input['cover_image'] ?? $input['image_url'] ?? $input['image'] ?? '';
         $short_description = $input['short_description'] ?? $input['excerpt'] ?? '';
         $full_content = $input['full_content'] ?? $input['content'] ?? '';
         $author = !empty($input['author']) ? trim($input['author']) : 'JSArt&Decor Editorial';

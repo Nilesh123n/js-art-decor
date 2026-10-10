@@ -269,7 +269,7 @@ export function getBlogPostingSchema(blog: Blog, currentUrl?: string) {
     '@id': `${pageUrl}#article`,
     headline: blog.title,
     alternativeHeadline: blog.short_description,
-    image: blog.featured_image ? [blog.featured_image] : [`${SITE_URL}/uploads/logo.png`],
+    image: (blog.featured_image || (blog as any).cover_image) ? [blog.featured_image || (blog as any).cover_image] : [`${SITE_URL}/uploads/logo.png`],
     datePublished: blog.created_at || '2025-01-01T00:00:00Z',
     dateModified: blog.created_at || '2025-01-01T00:00:00Z',
     author: {
@@ -320,7 +320,7 @@ export function getBlogListSchema(blogs: Blog[], currentUrl?: string) {
       '@type': 'BlogPosting',
       headline: b.title,
       description: b.short_description,
-      image: b.featured_image,
+      image: b.featured_image || (b as any).cover_image,
       url: `${SITE_URL}/?blog=${b.id}`,
       datePublished: b.created_at,
       author: {

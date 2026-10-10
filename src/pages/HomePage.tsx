@@ -8,6 +8,7 @@ import { INITIAL_PRODUCTS } from '../data/mockData';
 import { ProductCarousel } from '../components/common/ProductCarousel';
 import { ImageWithFallback } from '../components/common/ImageWithFallback';
 import { ApiService } from '../services/api';
+import { getBlogImageUrl } from '../utils/imageHelper';
 import type { PlannerSegment } from '../components/planner/ArtDecorPlannerModal';
 import { SEOHead } from '../components/seo/SEOHead';
 import { 
@@ -917,7 +918,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     className="flex gap-3 items-center group cursor-pointer bg-[#0A0A0A] p-2.5 rounded-lg border border-[#D4A017] hover:border-[#E5B842] shadow-[0_0_10px_rgba(212,160,23,0.2)] transition"
                   >
                     <div className="w-16 h-16 shrink-0 rounded overflow-hidden bg-neutral-900 border border-[#D4A017]/50">
-                      <ImageWithFallback src={blog.featured_image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                      <ImageWithFallback src={getBlogImageUrl(blog)} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
                     </div>
                     <div className="space-y-1 flex-1 min-w-0">
                       <h4 className="text-xs font-serif font-bold text-white group-hover:text-[#D4A017] transition line-clamp-2">

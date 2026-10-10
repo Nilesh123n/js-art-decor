@@ -12,11 +12,12 @@ const app = express();
 const PORT = 3000;
 
 async function startServer() {
-  app.use(express.json({ limit: "10mb" }));
-  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+  app.use(express.json({ limit: "25mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 
   // Serve uploads directory
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  app.use("/uploads", express.static(path.join(process.cwd(), "public", "uploads")));
 
   // Optional MySQL Connection Pool (Hostinger / Production)
   let mysqlPool: any = null;
@@ -249,8 +250,8 @@ async function startServer() {
             title VARCHAR(255) NOT NULL,
             slug VARCHAR(255) NOT NULL UNIQUE,
             category VARCHAR(100) NOT NULL DEFAULT 'Textile Guide',
-            featured_image VARCHAR(500) NULL,
-            cover_image VARCHAR(500) NULL,
+            featured_image LONGTEXT NULL,
+            cover_image LONGTEXT NULL,
             excerpt TEXT NULL,
             short_description TEXT NULL,
             content LONGTEXT NULL,
@@ -262,6 +263,10 @@ async function startServer() {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
+
+        try {
+          await mysqlPool.query("ALTER TABLE blogs MODIFY COLUMN featured_image LONGTEXT NULL, MODIFY COLUMN cover_image LONGTEXT NULL");
+        } catch {}
 
         for (const b of blogsDb) {
           const isPublished = (String(b.status || "").toLowerCase() === "published" || (b as any).is_published == 1 || !(b.status)) ? 1 : 0;
@@ -565,8 +570,8 @@ async function startServer() {
           title VARCHAR(255) NOT NULL,
           slug VARCHAR(255) NOT NULL UNIQUE,
           category VARCHAR(100) NOT NULL DEFAULT 'Textile Guide',
-          featured_image VARCHAR(500) NULL,
-          cover_image VARCHAR(500) NULL,
+          featured_image LONGTEXT NULL,
+          cover_image LONGTEXT NULL,
           excerpt TEXT NULL,
           short_description TEXT NULL,
           content LONGTEXT NULL,
@@ -578,6 +583,10 @@ async function startServer() {
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
       `);
+
+      try {
+        await mysqlPool.query("ALTER TABLE blogs MODIFY COLUMN featured_image LONGTEXT NULL, MODIFY COLUMN cover_image LONGTEXT NULL");
+      } catch {}
 
       const [blogRows]: any = await mysqlPool.query("SELECT * FROM blogs ORDER BY id DESC");
       if (Array.isArray(blogRows) && blogRows.length > 0) {
@@ -1757,7 +1766,15 @@ async function startServer() {
 
       // Handle batch save from admin: { blogs: Blog[] }
       if (Array.isArray(body.blogs)) {
-        await saveBlogsToDb(body.blogs);
+        const normalizedBlogs = body.blogs.map((b: any) => {
+          const img = b.featured_image || b.cover_image || b.image_url || b.image || "";
+          return {
+            ...b,
+            featured_image: img,
+            cover_image: img
+          };
+        });
+        await saveBlogsToDb(normalizedBlogs);
         return res.json({ success: true, message: "Blogs updated and saved successfully.", data: blogsDb });
       }
 
@@ -1773,11 +1790,13 @@ async function startServer() {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
 
+      const imageVal = body.featured_image || body.cover_image || body.image_url || body.image || "";
       const newBlog = {
         id: body.id || newId,
         title: title,
         slug: slug,
-        featured_image: body.featured_image || body.cover_image || "",
+        featured_image: imageVal,
+        cover_image: imageVal,
         short_description: body.short_description || body.excerpt || "",
         full_content: body.full_content || body.content || "",
         category: body.category || "General",
@@ -1798,12 +1817,17 @@ async function startServer() {
 
       const updatedTitle = String(body.title !== undefined ? body.title : blogsDb[idx].title).trim();
       const updatedSlug = body.slug || (updatedTitle ? updatedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") : blogsDb[idx].slug);
+      const imageVal = body.featured_image !== undefined 
+        ? body.featured_image 
+        : (body.cover_image !== undefined ? body.cover_image : blogsDb[idx].featured_image);
 
       blogsDb[idx] = { 
         ...blogsDb[idx], 
         ...body,
         title: updatedTitle,
         slug: updatedSlug,
+        featured_image: imageVal,
+        cover_image: imageVal,
         updated_at: new Date().toISOString()
       };
 

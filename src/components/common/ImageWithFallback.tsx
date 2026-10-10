@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { normalizeImageUrl } from '../../utils/imageHelper';
 
 interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src?: string;
@@ -15,16 +16,18 @@ export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   className = '',
   ...props
 }) => {
-  const [imgSrc, setImgSrc] = useState<string>(src || fallbackSrc);
+  const normalized = normalizeImageUrl(src);
+  const [imgSrc, setImgSrc] = useState<string>(normalized || fallbackSrc);
   const [hasError, setHasError] = useState<boolean>(false);
 
   React.useEffect(() => {
-    setImgSrc(src || fallbackSrc);
+    const validUrl = normalizeImageUrl(src);
+    setImgSrc(validUrl || fallbackSrc);
     setHasError(false);
   }, [src, fallbackSrc]);
 
   const handleError = () => {
-    if (!hasError) {
+    if (!hasError && imgSrc !== fallbackSrc) {
       setHasError(true);
       setImgSrc(fallbackSrc);
     }

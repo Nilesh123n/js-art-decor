@@ -144,12 +144,16 @@ export interface Blog {
   title: string;
   slug: string;
   featured_image: string;
+  cover_image?: string;
+  image_url?: string;
   short_description: string;
+  excerpt?: string;
   full_content: string;
   category: string;
   author: string;
   status: 'Draft' | 'Published';
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Partner {
