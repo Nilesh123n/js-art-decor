@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { Search, SlidersHorizontal, X, ArrowUpDown, Filter, RotateCcw } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, SlidersHorizontal, X, ArrowUpDown, Filter, RotateCcw, Layers } from 'lucide-react';
 import { Product, ProductionType, Segment, ProductType } from '../types/ecommerce';
 import { ProductCard } from '../components/common/ProductCard';
 import { SEOHead } from '../components/seo/SEOHead';
 import { getItemListSchema, getBreadcrumbSchema } from '../utils/seo';
+import { getSubcategoriesFor, getAllSubcategories } from '../constants/categories';
 
 interface CatalogPageProps {
   products: Product[];
@@ -11,6 +12,7 @@ interface CatalogPageProps {
     production_type?: string;
     segment?: string;
     product_type?: string;
+    sub_category?: string;
     search?: string;
   };
   mode: 'Retail' | 'Wholesale';
@@ -30,9 +32,43 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const [selectedProduction, setSelectedProduction] = useState<string>(initialFilters?.production_type || 'All');
   const [selectedSegment, setSelectedSegment] = useState<string>(initialFilters?.segment || 'All');
   const [selectedProductType, setSelectedProductType] = useState<string>(initialFilters?.product_type || 'All');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>(initialFilters?.sub_category || 'All');
   const [searchQuery, setSearchQuery] = useState<string>(initialFilters?.search || '');
   const [sortBy, setSortBy] = useState<'featured' | 'price-low' | 'price-high' | 'newest'>('featured');
   const [mobileFilterOpen, setMobileFilterOpen] = useState<boolean>(false);
+
+  // Synchronize state when initialFilters prop changes
+  useEffect(() => {
+    if (initialFilters) {
+      if (initialFilters.production_type !== undefined) setSelectedProduction(initialFilters.production_type);
+      if (initialFilters.segment !== undefined) setSelectedSegment(initialFilters.segment);
+      if (initialFilters.product_type !== undefined) setSelectedProductType(initialFilters.product_type);
+      if (initialFilters.sub_category !== undefined) setSelectedSubCategory(initialFilters.sub_category);
+      if (initialFilters.search !== undefined) setSearchQuery(initialFilters.search);
+    }
+  }, [initialFilters]);
+
+  // Available subcategories based on current segment and category filter
+  const availableSubcategories = useMemo(() => {
+    if (selectedSegment !== 'All' && selectedProductType !== 'All') {
+      return getSubcategoriesFor(selectedSegment, selectedProductType);
+    }
+    if (selectedSegment !== 'All') {
+      const set = new Set<string>();
+      ['Textile', 'Art Decor', 'Electric Decor'].forEach((c) => {
+        getSubcategoriesFor(selectedSegment, c).forEach((s) => set.add(s));
+      });
+      return Array.from(set);
+    }
+    if (selectedProductType !== 'All') {
+      const set = new Set<string>();
+      ['Home', 'Hotel', 'Event'].forEach((seg) => {
+        getSubcategoriesFor(seg, selectedProductType).forEach((s) => set.add(s));
+      });
+      return Array.from(set);
+    }
+    return getAllSubcategories();
+  }, [selectedSegment, selectedProductType]);
 
   // Filtered & Sorted Products
   const processedProducts = useMemo(() => {
@@ -42,12 +78,14 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         if (selectedProduction !== 'All' && p.production_type !== selectedProduction) return false;
         if (selectedSegment !== 'All' && p.segment !== selectedSegment) return false;
         if (selectedProductType !== 'All' && p.product_type !== selectedProductType) return false;
+        if (selectedSubCategory !== 'All' && p.sub_category !== selectedSubCategory) return false;
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchName = p.name.toLowerCase().includes(q);
           const matchDesc = p.description.toLowerCase().includes(q);
           const matchSku = p.sku.toLowerCase().includes(q);
-          if (!matchName && !matchDesc && !matchSku) return false;
+          const matchSub = p.sub_category ? p.sub_category.toLowerCase().includes(q) : false;
+          if (!matchName && !matchDesc && !matchSku && !matchSub) return false;
         }
         return true;
       })
@@ -60,14 +98,20 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0);
       });
-  }, [products, selectedProduction, selectedSegment, selectedProductType, searchQuery, sortBy, mode]);
+  }, [products, selectedProduction, selectedSegment, selectedProductType, selectedSubCategory, searchQuery, sortBy, mode]);
 
-  const hasActiveFilters = selectedProduction !== 'All' || selectedSegment !== 'All' || selectedProductType !== 'All' || searchQuery !== '';
+  const hasActiveFilters = 
+    selectedProduction !== 'All' || 
+    selectedSegment !== 'All' || 
+    selectedProductType !== 'All' || 
+    selectedSubCategory !== 'All' || 
+    searchQuery !== '';
 
   const clearAllFilters = () => {
     setSelectedProduction('All');
     setSelectedSegment('All');
     setSelectedProductType('All');
+    setSelectedSubCategory('All');
     setSearchQuery('');
   };
 
@@ -156,7 +200,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             {[
               { label: 'ALL CATEGORIES', value: 'All' },
-              { label: 'HOME DECOR', value: 'HOME DECOR' },
+              { label: 'TEXTILE', value: 'HOME DECOR' },
               { label: 'ART DECOR', value: 'ART DECOR' },
               { label: 'ELECTRIC DECOR', value: 'ELECTRIC DECOR' },
             ].map((cat) => {
@@ -164,8 +208,11 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
               return (
                 <button
                   key={cat.value}
-                  onClick={() => setSelectedProductType(cat.value)}
-                  className={`px-3.5 py-1.5 text-xs rounded-lg font-bold tracking-wider transition-all duration-200 ${
+                  onClick={() => {
+                    setSelectedProductType(cat.value);
+                    setSelectedSubCategory('All');
+                  }}
+                  className={`px-3.5 py-1.5 text-xs rounded-lg font-bold tracking-wider transition-all duration-200 cursor-pointer ${
                     active
                       ? 'bg-[#D4A017] text-black shadow-[0_0_12px_rgba(212,160,23,0.4)]'
                       : 'bg-[#141414] text-[#CCCCCC] border border-[#333333] hover:border-[#D4A017]/70 hover:text-white'
@@ -178,10 +225,66 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           </div>
         </div>
 
-        {/* Bottom Row: Horizontal Filters Bar (Search + Production + Segment + Clear) */}
+        {/* Middle Row: Subcategories Horizontal Scrollable Badges / Tabs */}
+        {availableSubcategories.length > 0 && (
+          <div className="pt-2 pb-1 space-y-2 border-b border-[#222222]">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-[#D4A017] font-bold uppercase text-[11px] tracking-wider">
+                <Layers className="w-3.5 h-3.5 text-[#D4A017]" />
+                <span>Sub Categories:</span>
+                <span className="text-[10px] text-[#A3A3A3] font-normal font-sans">
+                  ({selectedSegment !== 'All' ? selectedSegment : 'All Spaces'} • {selectedProductType === 'HOME DECOR' ? 'Textile' : selectedProductType !== 'All' ? selectedProductType : 'All Categories'})
+                </span>
+              </div>
+              {selectedSubCategory !== 'All' && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategory('All')}
+                  className="text-[11px] text-[#D4A017] hover:underline flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Show All Subcategories</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+              <button
+                type="button"
+                onClick={() => setSelectedSubCategory('All')}
+                className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap font-medium transition cursor-pointer ${
+                  selectedSubCategory === 'All'
+                    ? 'bg-[#D4A017] text-black font-bold shadow-xs'
+                    : 'bg-[#141414] text-[#CCCCCC] border border-[#333333] hover:border-[#D4A017]/60 hover:text-white'
+                }`}
+              >
+                All Subcategories
+              </button>
+              {availableSubcategories.map((sub) => {
+                const active = selectedSubCategory === sub;
+                return (
+                  <button
+                    key={sub}
+                    type="button"
+                    onClick={() => setSelectedSubCategory(sub)}
+                    className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap font-medium transition cursor-pointer ${
+                      active
+                        ? 'bg-[#D4A017] text-black font-bold shadow-[0_0_10px_rgba(212,160,23,0.4)]'
+                        : 'bg-[#141414] text-[#CCCCCC] border border-[#333333] hover:border-[#D4A017]/60 hover:text-white'
+                    }`}
+                  >
+                    {sub}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Row: Horizontal Filters Bar (Search + Subcategory Dropdown + Production + Segment + Clear) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
           {/* Keyword Search Input */}
-          <div className="lg:col-span-5 relative">
+          <div className="lg:col-span-4 relative">
             <input
               type="text"
               placeholder="Search products by title, SKU, or specs..."
@@ -197,29 +300,49 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
             )}
           </div>
 
-          {/* Production Method Horizontal Select */}
+          {/* Subcategory Dropdown */}
           <div className="lg:col-span-3">
             <div className="flex items-center gap-1.5 bg-[#141414] border border-[#333333] hover:border-[#D4A017]/60 rounded-lg px-3 py-2 text-xs">
+              <span className="text-[#A3A3A3] text-[11px] whitespace-nowrap">Subcat:</span>
+              <select
+                value={selectedSubCategory}
+                onChange={(e) => setSelectedSubCategory(e.target.value)}
+                className="bg-transparent text-white font-medium focus:outline-none w-full cursor-pointer truncate"
+              >
+                <option value="All" className="bg-[#0A0A0A] text-white">All Subcategories</option>
+                {availableSubcategories.map((sub) => (
+                  <option key={sub} value={sub} className="bg-[#0A0A0A] text-white">{sub}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Production Method Horizontal Select */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-1.5 bg-[#141414] border border-[#333333] hover:border-[#D4A017]/60 rounded-lg px-2.5 py-2 text-xs">
               <span className="text-[#A3A3A3] text-[11px] whitespace-nowrap">Method:</span>
               <select
                 value={selectedProduction}
                 onChange={(e) => setSelectedProduction(e.target.value)}
                 className="bg-transparent text-white font-medium focus:outline-none w-full cursor-pointer"
               >
-                <option value="All" className="bg-[#0A0A0A] text-white">All Methods</option>
-                <option value="Handmade" className="bg-[#0A0A0A] text-white">Handmade / Artisanal</option>
-                <option value="Factory" className="bg-[#0A0A0A] text-white">Factory / Precision</option>
+                <option value="All" className="bg-[#0A0A0A] text-white">All</option>
+                <option value="Handmade" className="bg-[#0A0A0A] text-white">Handmade</option>
+                <option value="Factory" className="bg-[#0A0A0A] text-white">Factory</option>
               </select>
             </div>
           </div>
 
           {/* Segment Collection Horizontal Select */}
-          <div className="lg:col-span-3">
-            <div className="flex items-center gap-1.5 bg-[#141414] border border-[#333333] hover:border-[#D4A017]/60 rounded-lg px-3 py-2 text-xs">
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-1.5 bg-[#141414] border border-[#333333] hover:border-[#D4A017]/60 rounded-lg px-2.5 py-2 text-xs">
               <span className="text-[#A3A3A3] text-[11px] whitespace-nowrap">Segment:</span>
               <select
                 value={selectedSegment}
-                onChange={(e) => setSelectedSegment(e.target.value)}
+                onChange={(e) => {
+                  setSelectedSegment(e.target.value);
+                  setSelectedSubCategory('All');
+                }}
                 className="bg-transparent text-white font-medium focus:outline-none w-full cursor-pointer"
               >
                 <option value="All" className="bg-[#0A0A0A] text-white">All Segments</option>
@@ -255,8 +378,16 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
             <span className="text-[#A3A3A3]">Active Filters:</span>
             {selectedProductType !== 'All' && (
               <span className="inline-flex items-center gap-1 bg-[#141414] border border-[#D4A017] text-[#D4A017] px-2.5 py-0.5 rounded-full font-semibold">
-                Category: {selectedProductType}
+                Category: {selectedProductType === 'HOME DECOR' ? 'Textile' : selectedProductType}
                 <button onClick={() => setSelectedProductType('All')} className="hover:text-white">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {selectedSubCategory !== 'All' && (
+              <span className="inline-flex items-center gap-1 bg-[#141414] border border-[#D4A017] text-[#D4A017] px-2.5 py-0.5 rounded-full font-semibold">
+                Subcategory: {selectedSubCategory}
+                <button onClick={() => setSelectedSubCategory('All')} className="hover:text-white">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -341,19 +472,68 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
             <div className="space-y-4 text-xs">
               <div>
                 <h3 className="font-bold text-[#D4A017] mb-2 uppercase">Product Category</h3>
-                {['All', 'HOME DECOR', 'ART DECOR', 'ELECTRIC DECOR'].map(c => (
-                  <label key={c} className="block py-1 text-[#CCCCCC] hover:text-white cursor-pointer">
+                {[
+                  { label: 'All Categories', value: 'All' },
+                  { label: 'Textile', value: 'HOME DECOR' },
+                  { label: 'Art Decor', value: 'ART DECOR' },
+                  { label: 'Electric Decor', value: 'ELECTRIC DECOR' }
+                ].map(c => (
+                  <label key={c.value} className="block py-1 text-[#CCCCCC] hover:text-white cursor-pointer">
                     <input
                       type="radio"
                       name="m_cat"
-                      checked={selectedProductType === c}
-                      onChange={() => setSelectedProductType(c)}
+                      checked={selectedProductType === c.value}
+                      onChange={() => {
+                        setSelectedProductType(c.value);
+                        setSelectedSubCategory('All');
+                      }}
                       className="mr-2 accent-[#D4A017]"
                     />
-                    {c === 'All' ? 'All Categories' : c}
+                    {c.label}
                   </label>
                 ))}
               </div>
+
+              {availableSubcategories.length > 0 && (
+                <div className="pt-2 border-t border-neutral-800">
+                  <h3 className="font-bold text-[#D4A017] mb-2 uppercase flex items-center justify-between">
+                    <span>Sub Category</span>
+                    {selectedSubCategory !== 'All' && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSubCategory('All')}
+                        className="text-[10px] text-[#A3A3A3] hover:text-[#D4A017] capitalize"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </h3>
+                  <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+                    <label className="block py-1 text-[#CCCCCC] hover:text-white cursor-pointer">
+                      <input
+                        type="radio"
+                        name="m_sub"
+                        checked={selectedSubCategory === 'All'}
+                        onChange={() => setSelectedSubCategory('All')}
+                        className="mr-2 accent-[#D4A017]"
+                      />
+                      All Subcategories
+                    </label>
+                    {availableSubcategories.map(sub => (
+                      <label key={sub} className="block py-1 text-[#CCCCCC] hover:text-white cursor-pointer">
+                        <input
+                          type="radio"
+                          name="m_sub"
+                          checked={selectedSubCategory === sub}
+                          onChange={() => setSelectedSubCategory(sub)}
+                          className="mr-2 accent-[#D4A017]"
+                        />
+                        {sub}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="font-bold text-[#D4A017] mb-2 uppercase">Production Method</h3>

@@ -192,10 +192,20 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         {/* Right Product Specifications & Purchasing Block */}
         <div className="space-y-6">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#D4A017] mb-1">
-              <span>{product.product_type}</span>
-              <span>•</span>
-              <span>{product.sales_availability} Channel</span>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#D4A017] mb-1 flex-wrap">
+              <span>{product.segment}</span>
+              <span className="text-[#555555]">•</span>
+              <span>{product.product_type === 'HOME DECOR' ? 'Textile' : product.product_type}</span>
+              {product.sub_category && (
+                <>
+                  <span className="text-[#555555]">•</span>
+                  <span className="text-[#E5B842] bg-[#D4A017]/20 border border-[#D4A017]/40 px-2 py-0.5 rounded text-[11px] font-semibold">
+                    {product.sub_category}
+                  </span>
+                </>
+              )}
+              <span className="text-[#555555]">•</span>
+              <span className="text-[#A3A3A3]">{product.sales_availability} Channel</span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white leading-tight">

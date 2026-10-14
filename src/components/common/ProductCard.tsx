@@ -100,8 +100,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {product.name}
           </h3>
 
-          <div className="text-[11px] text-[#A3A3A3] font-sans">
-            {product.product_type || product.category || 'Home Decor'}
+          <div className="text-[11px] text-[#A3A3A3] font-sans flex items-center gap-1.5 flex-wrap">
+            <span>{product.product_type === 'HOME DECOR' ? 'Textile' : product.product_type || 'Home Decor'}</span>
+            {product.sub_category && (
+              <>
+                <span className="text-[#555555]">•</span>
+                <span className="text-[#D4A017] font-medium">{product.sub_category}</span>
+              </>
+            )}
           </div>
 
           <div className="pt-1.5 flex items-baseline justify-between gap-1 flex-wrap">

@@ -8,6 +8,7 @@ try {
     $search = trim($_GET['q'] ?? $_GET['search'] ?? '');
     $segment = trim($_GET['segment'] ?? '');
     $product_type = trim($_GET['product_type'] ?? '');
+    $sub_category = trim($_GET['sub_category'] ?? '');
     $production_type = trim($_GET['production_type'] ?? '');
     $sales_availability = trim($_GET['sales_availability'] ?? '');
     $is_featured = isset($_GET['is_featured']) ? ($_GET['is_featured'] === '1' || $_GET['is_featured'] === 'true') : false;
@@ -20,18 +21,23 @@ try {
     $params = [];
 
     if (!empty($search)) {
-        $where[] = "(name LIKE :search OR sku LIKE :search OR description LIKE :search OR short_description LIKE :search OR material LIKE :search OR color LIKE :search)";
+        $where[] = "(name LIKE :search OR sku LIKE :search OR description LIKE :search OR short_description LIKE :search OR material LIKE :search OR color LIKE :search OR sub_category LIKE :search)";
         $params[':search'] = '%' . $search . '%';
     }
 
-    if (!empty($segment)) {
+    if (!empty($segment) && $segment !== 'All') {
         $where[] = "segment = :segment";
         $params[':segment'] = $segment;
     }
 
-    if (!empty($product_type)) {
+    if (!empty($product_type) && $product_type !== 'All') {
         $where[] = "product_type = :product_type";
         $params[':product_type'] = $product_type;
+    }
+
+    if (!empty($sub_category) && $sub_category !== 'All') {
+        $where[] = "sub_category = :sub_category";
+        $params[':sub_category'] = $sub_category;
     }
 
     if (!empty($production_type)) {
@@ -84,6 +90,7 @@ try {
         $p['is_new_arrival'] = (bool)$p['is_new_arrival'];
         $p['is_active'] = (bool)$p['is_active'];
         $p['short_description'] = $p['short_description'] ?? '';
+        $p['sub_category'] = $p['sub_category'] ?? '';
         $p['size'] = $p['size'] ?? '';
         $p['material'] = $p['material'] ?? '';
         $p['color'] = $p['color'] ?? '';

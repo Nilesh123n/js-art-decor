@@ -21,6 +21,8 @@ const TrackOrderPage = React.lazy(() => import('./pages/TrackOrderPage').then(m 
 const BlogPage = React.lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
 const PartnersPage = React.lazy(() => import('./pages/PartnersPage').then(m => ({ default: m.PartnersPage })));
 const ContactPage = React.lazy(() => import('./pages/ContactPage').then(m => ({ default: m.ContactPage })));
+const AboutUsPage = React.lazy(() => import('./pages/AboutUsPage').then(m => ({ default: m.AboutUsPage })));
+const PrivacyPolicyPage = React.lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
 
 // Admin Pages (Loaded only on demand)
 const AdminLogin = React.lazy(() => import('./pages/admin/AdminLogin').then(m => ({ default: m.AdminLogin })));
@@ -388,6 +390,20 @@ export default function App() {
 
         {activeView === 'contact' && (
           <ContactPage
+            settings={settings}
+            onNavigate={handleNavigate}
+          />
+        )}
+
+        {(activeView === 'about-us' || activeView === 'about') && (
+          <AboutUsPage
+            settings={settings}
+            onNavigate={handleNavigate}
+          />
+        )}
+
+        {(activeView === 'privacy-policy' || activeView === 'privacy') && (
+          <PrivacyPolicyPage
             settings={settings}
             onNavigate={handleNavigate}
           />

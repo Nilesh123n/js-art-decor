@@ -79,6 +79,7 @@ export const ApiService = {
     production_type?: string;
     segment?: string;
     product_type?: string;
+    sub_category?: string;
     sales_availability?: string;
     is_featured?: boolean;
     is_new_arrival?: boolean;
@@ -89,6 +90,7 @@ export const ApiService = {
     if (filters?.production_type) params.append('production_type', filters.production_type);
     if (filters?.segment) params.append('segment', filters.segment);
     if (filters?.product_type) params.append('product_type', filters.product_type);
+    if (filters?.sub_category) params.append('sub_category', filters.sub_category);
     if (filters?.sales_availability) params.append('sales_availability', filters.sales_availability);
     if (filters?.is_featured) params.append('is_featured', '1');
     if (filters?.is_new_arrival) params.append('is_new_arrival', '1');

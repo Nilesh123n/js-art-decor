@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Layers, ArrowRight, Sparkles, Home, Building2, Calendar, Check, Filter } from 'lucide-react';
 import { Product } from '../types/ecommerce';
 import { ProductCard } from '../components/common/ProductCard';
 import { SEOHead } from '../components/seo/SEOHead';
 import { getBreadcrumbSchema, getItemListSchema } from '../utils/seo';
+import { getSubcategoriesFor, getAllSubcategories } from '../constants/categories';
 
 interface WholesaleTreePageProps {
   products: Product[];
@@ -21,12 +22,35 @@ export const WholesaleTreePage: React.FC<WholesaleTreePageProps> = ({
   const [selectedProduction, setSelectedProduction] = useState<'All' | 'Handmade' | 'Factory'>('All');
   const [selectedSegment, setSelectedSegment] = useState<'All' | 'Home' | 'Hotel' | 'Event'>('All');
   const [selectedProductType, setSelectedProductType] = useState<'All' | 'HOME DECOR' | 'ART DECOR' | 'ELECTRIC DECOR'>('All');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('All');
+
+  const availableSubs = useMemo(() => {
+    if (selectedSegment !== 'All' && selectedProductType !== 'All') {
+      return getSubcategoriesFor(selectedSegment, selectedProductType);
+    }
+    if (selectedSegment !== 'All') {
+      const set = new Set<string>();
+      ['Textile', 'Art Decor', 'Electric Decor'].forEach((c) => {
+        getSubcategoriesFor(selectedSegment, c).forEach((s) => set.add(s));
+      });
+      return Array.from(set);
+    }
+    if (selectedProductType !== 'All') {
+      const set = new Set<string>();
+      ['Home', 'Hotel', 'Event'].forEach((seg) => {
+        getSubcategoriesFor(seg, selectedProductType).forEach((s) => set.add(s));
+      });
+      return Array.from(set);
+    }
+    return getAllSubcategories();
+  }, [selectedSegment, selectedProductType]);
 
   // Filter products by tree selections
   const filteredProducts = products.filter(p => {
     if (selectedProduction !== 'All' && p.production_type !== selectedProduction) return false;
     if (selectedSegment !== 'All' && p.segment !== selectedSegment) return false;
     if (selectedProductType !== 'All' && p.product_type !== selectedProductType) return false;
+    if (selectedSubCategory !== 'All' && p.sub_category !== selectedSubCategory) return false;
     return true;
   });
 
@@ -255,6 +279,52 @@ export const WholesaleTreePage: React.FC<WholesaleTreePageProps> = ({
         </div>
       </div>
 
+      {/* Tier 4: Subcategories Quick Navigation */}
+      {availableSubs.length > 0 && (
+        <div className="bg-[#0A0A0A] p-4 rounded-xl border border-[#D4A017]/70 shadow-[0_0_15px_rgba(212,160,23,0.1)] space-y-2.5">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-[#D4A017] text-[11px]">
+              <Layers className="w-3.5 h-3.5" />
+              <span>Tier 4: Subcategories ({selectedSegment !== 'All' ? selectedSegment : 'All'} • {selectedProductType === 'HOME DECOR' ? 'Textile' : selectedProductType !== 'All' ? selectedProductType : 'All Categories'})</span>
+            </div>
+            {selectedSubCategory !== 'All' && (
+              <button
+                onClick={() => setSelectedSubCategory('All')}
+                className="text-[11px] text-[#D4A017] hover:underline"
+              >
+                Clear Subcategory
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              onClick={() => setSelectedSubCategory('All')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                selectedSubCategory === 'All'
+                  ? 'bg-[#D4A017] text-black font-bold shadow-xs'
+                  : 'bg-[#141414] text-[#CCCCCC] border border-[#333333] hover:border-[#D4A017]/60'
+              }`}
+            >
+              All Subcategories
+            </button>
+            {availableSubs.map((sub) => (
+              <button
+                key={sub}
+                onClick={() => setSelectedSubCategory(sub)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  selectedSubCategory === sub
+                    ? 'bg-[#D4A017] text-black font-bold shadow-xs'
+                    : 'bg-[#141414] text-[#CCCCCC] border border-[#333333] hover:border-[#D4A017]/60'
+                }`}
+              >
+                {sub}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Filtered Results Header */}
       <div className="flex items-center justify-between pt-4 border-t border-[#D4A017]/30">
         <div>
@@ -264,12 +334,13 @@ export const WholesaleTreePage: React.FC<WholesaleTreePageProps> = ({
           <p className="text-xs text-[#A3A3A3]">Prices below reflect wholesale tier with MOQ requirements.</p>
         </div>
 
-        {(selectedProduction !== 'All' || selectedSegment !== 'All' || selectedProductType !== 'All') && (
+        {(selectedProduction !== 'All' || selectedSegment !== 'All' || selectedProductType !== 'All' || selectedSubCategory !== 'All') && (
           <button
             onClick={() => {
               setSelectedProduction('All');
               setSelectedSegment('All');
               setSelectedProductType('All');
+              setSelectedSubCategory('All');
             }}
             className="text-xs text-[#D4A017] hover:text-[#E5B842] hover:underline font-semibold"
           >

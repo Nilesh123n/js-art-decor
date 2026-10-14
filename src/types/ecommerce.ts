@@ -14,6 +14,7 @@ export interface Product {
   production_type: ProductionType;
   segment: Segment;
   product_type: ProductType;
+  sub_category?: string;
   sales_availability: SalesAvailability;
   retail_price: number;
   discount_price?: number;

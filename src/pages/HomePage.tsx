@@ -19,6 +19,7 @@ import {
   getBreadcrumbSchema,
   DEFAULT_STORE_FAQS 
 } from '../utils/seo';
+import { CATEGORY_HIERARCHY, toProductTypeDb, MainCategoryType } from '../constants/categories';
 
 const ArtDecorPlannerModal = React.lazy(() => 
   import('../components/planner/ArtDecorPlannerModal').then(m => ({ default: m.ArtDecorPlannerModal }))
@@ -58,6 +59,9 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [plannerInitialSegment, setPlannerInitialSegment] = useState<PlannerSegment>('Home');
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
   const [activeOfferTicker, setActiveOfferTicker] = useState(0);
+  const [homeActiveCat, setHomeActiveCat] = useState<MainCategoryType>('Textile');
+  const [hotelActiveCat, setHotelActiveCat] = useState<MainCategoryType>('Textile');
+  const [eventActiveCat, setEventActiveCat] = useState<MainCategoryType>('Textile');
 
   const handleOpenPlanner = (segment: PlannerSegment) => {
     setPlannerInitialSegment(segment);
@@ -480,36 +484,62 @@ export const HomePage: React.FC<HomePageProps> = ({
 
                   {/* 3 Dedicated Category Buttons */}
                   <div className="pt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Home', product_type: 'HOME DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Textile
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Home', product_type: 'ART DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Art Decor
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Home', product_type: 'ELECTRIC DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Electric Decor
-                    </button>
+                    {(['Textile', 'Art Decor', 'Electric Decor'] as MainCategoryType[]).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHomeActiveCat(cat);
+                        }}
+                        className={`text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap cursor-pointer border ${
+                          homeActiveCat === cat
+                            ? 'bg-[#D4A017] text-black border-[#D4A017] shadow-[0_0_12px_rgba(212,160,23,0.5)]'
+                            : 'bg-[#0A0A0A]/90 text-[#D4A017] hover:bg-[#D4A017]/20 border-[#D4A017]/60'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Subcategories Ribbon for Home */}
+                  <div className="pt-1.5 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-[#A3A3A3]">
+                      <span className="font-semibold text-white/90 flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5 text-[#D4A017]" />
+                        <span>Home &gt; {homeActiveCat} Subcategories:</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate('catalog', { segment: 'Home', product_type: toProductTypeDb(homeActiveCat) });
+                        }}
+                        className="text-[#D4A017] hover:underline font-bold text-[10px] uppercase tracking-wider"
+                      >
+                        View All {homeActiveCat} &rarr;
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                      {CATEGORY_HIERARCHY.Home[homeActiveCat].map((sub) => (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate('catalog', {
+                              segment: 'Home',
+                              product_type: toProductTypeDb(homeActiveCat),
+                              sub_category: sub
+                            });
+                          }}
+                          className="bg-black/70 hover:bg-[#D4A017] text-[#DDDDDD] hover:text-black border border-[#D4A017]/50 hover:border-[#D4A017] text-[10px] sm:text-[11px] font-medium py-1 px-2.5 rounded-md transition-all shadow-xs cursor-pointer whitespace-nowrap"
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -565,36 +595,62 @@ export const HomePage: React.FC<HomePageProps> = ({
 
                   {/* 3 Dedicated Category Buttons */}
                   <div className="pt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Hotel', product_type: 'HOME DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Textile
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Hotel', product_type: 'ART DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Art Decor
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Hotel', product_type: 'ELECTRIC DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Electric Decor
-                    </button>
+                    {(['Textile', 'Art Decor', 'Electric Decor'] as MainCategoryType[]).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHotelActiveCat(cat);
+                        }}
+                        className={`text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap cursor-pointer border ${
+                          hotelActiveCat === cat
+                            ? 'bg-[#D4A017] text-black border-[#D4A017] shadow-[0_0_12px_rgba(212,160,23,0.5)]'
+                            : 'bg-[#0A0A0A]/90 text-[#D4A017] hover:bg-[#D4A017]/20 border-[#D4A017]/60'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Subcategories Ribbon for Hotel */}
+                  <div className="pt-1.5 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-[#A3A3A3]">
+                      <span className="font-semibold text-white/90 flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5 text-[#D4A017]" />
+                        <span>Hotel &gt; {hotelActiveCat} Subcategories:</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate('catalog', { segment: 'Hotel', product_type: toProductTypeDb(hotelActiveCat) });
+                        }}
+                        className="text-[#D4A017] hover:underline font-bold text-[10px] uppercase tracking-wider"
+                      >
+                        View All {hotelActiveCat} &rarr;
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                      {CATEGORY_HIERARCHY.Hotel[hotelActiveCat].map((sub) => (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate('catalog', {
+                              segment: 'Hotel',
+                              product_type: toProductTypeDb(hotelActiveCat),
+                              sub_category: sub
+                            });
+                          }}
+                          className="bg-black/70 hover:bg-[#D4A017] text-[#DDDDDD] hover:text-black border border-[#D4A017]/50 hover:border-[#D4A017] text-[10px] sm:text-[11px] font-medium py-1 px-2.5 rounded-md transition-all shadow-xs cursor-pointer whitespace-nowrap"
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -650,36 +706,62 @@ export const HomePage: React.FC<HomePageProps> = ({
 
                   {/* 3 Dedicated Category Buttons */}
                   <div className="pt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Event', product_type: 'HOME DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Textile
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Event', product_type: 'ART DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Art Decor
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigate('catalog', { segment: 'Event', product_type: 'ELECTRIC DECOR' });
-                      }}
-                      className="bg-[#0A0A0A]/90 hover:bg-[#D4A017] text-[#D4A017] hover:text-black border border-[#D4A017] text-[10px] sm:text-xs font-bold py-2 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap"
-                    >
-                      Electric Decor
-                    </button>
+                    {(['Textile', 'Art Decor', 'Electric Decor'] as MainCategoryType[]).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEventActiveCat(cat);
+                        }}
+                        className={`text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-lg transition-all tracking-wider shadow-sm uppercase whitespace-nowrap cursor-pointer border ${
+                          eventActiveCat === cat
+                            ? 'bg-[#D4A017] text-black border-[#D4A017] shadow-[0_0_12px_rgba(212,160,23,0.5)]'
+                            : 'bg-[#0A0A0A]/90 text-[#D4A017] hover:bg-[#D4A017]/20 border-[#D4A017]/60'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Subcategories Ribbon for Event */}
+                  <div className="pt-1.5 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-[#A3A3A3]">
+                      <span className="font-semibold text-white/90 flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5 text-[#D4A017]" />
+                        <span>Event &gt; {eventActiveCat} Subcategories:</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate('catalog', { segment: 'Event', product_type: toProductTypeDb(eventActiveCat) });
+                        }}
+                        className="text-[#D4A017] hover:underline font-bold text-[10px] uppercase tracking-wider"
+                      >
+                        View All {eventActiveCat} &rarr;
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                      {CATEGORY_HIERARCHY.Event[eventActiveCat].map((sub) => (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate('catalog', {
+                              segment: 'Event',
+                              product_type: toProductTypeDb(eventActiveCat),
+                              sub_category: sub
+                            });
+                          }}
+                          className="bg-black/70 hover:bg-[#D4A017] text-[#DDDDDD] hover:text-black border border-[#D4A017]/50 hover:border-[#D4A017] text-[10px] sm:text-[11px] font-medium py-1 px-2.5 rounded-md transition-all shadow-xs cursor-pointer whitespace-nowrap"
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Search, Upload, Loader2, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Edit2, Trash2, X, Search, Upload, Loader2, AlertCircle, CheckCircle2, RefreshCw, Filter, Layers } from 'lucide-react';
 import { Product, ProductionType, Segment, ProductType, SalesAvailability } from '../../types/ecommerce';
 import { ApiService } from '../../services/api';
 import { ImageKitUploader } from '../../components/admin/ImageKitUploader';
+import { getSubcategoriesFor, getAllSubcategories, ALL_SEGMENTS } from '../../constants/categories';
 
 interface AdminProductsProps {
   products: Product[];
@@ -11,6 +12,9 @@ interface AdminProductsProps {
 
 export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefreshProducts }) => {
   const [search, setSearch] = useState('');
+  const [filterSegment, setFilterSegment] = useState<string>('All');
+  const [filterCategory, setFilterCategory] = useState<string>('All');
+  const [filterSubCategory, setFilterSubCategory] = useState<string>('All');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -19,10 +23,38 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.sku.toLowerCase().includes(search.toLowerCase())
-  );
+  const adminAvailableSubcategories = useMemo(() => {
+    if (filterSegment !== 'All' && filterCategory !== 'All') {
+      return getSubcategoriesFor(filterSegment, filterCategory);
+    }
+    if (filterSegment !== 'All') {
+      const set = new Set<string>();
+      ['Textile', 'Art Decor', 'Electric Decor'].forEach((c) => {
+        getSubcategoriesFor(filterSegment, c).forEach((s) => set.add(s));
+      });
+      return Array.from(set);
+    }
+    if (filterCategory !== 'All') {
+      const set = new Set<string>();
+      ['Home', 'Hotel', 'Event'].forEach((s) => {
+        getSubcategoriesFor(s, filterCategory).forEach((sub) => set.add(sub));
+      });
+      return Array.from(set);
+    }
+    return getAllSubcategories();
+  }, [filterSegment, filterCategory]);
+
+  const filteredProducts = products.filter(p => {
+    const matchSearch = 
+      p.name.toLowerCase().includes(search.toLowerCase()) || 
+      p.sku.toLowerCase().includes(search.toLowerCase()) ||
+      (p.sub_category && p.sub_category.toLowerCase().includes(search.toLowerCase()));
+    if (!matchSearch) return false;
+    if (filterSegment !== 'All' && p.segment !== filterSegment) return false;
+    if (filterCategory !== 'All' && p.product_type !== filterCategory) return false;
+    if (filterSubCategory !== 'All' && p.sub_category !== filterSubCategory) return false;
+    return true;
+  });
 
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg);
@@ -45,6 +77,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
 
   const handleOpenAddModal = () => {
     setError(null);
+    const initialSubs = getSubcategoriesFor('Home', 'HOME DECOR');
     setEditingProduct({
       name: '',
       slug: '',
@@ -55,6 +88,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
       production_type: 'Handmade',
       segment: 'Home',
       product_type: 'HOME DECOR',
+      sub_category: initialSubs[0] || 'Bed Sheets',
       sales_availability: 'Both',
       retail_price: 1999,
       wholesale_price: 1299,
@@ -72,7 +106,11 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
 
   const handleOpenEditModal = (prod: Product) => {
     setError(null);
-    setEditingProduct({ ...prod });
+    const availableSubs = getSubcategoriesFor(prod.segment, prod.product_type);
+    setEditingProduct({
+      ...prod,
+      sub_category: prod.sub_category || (availableSubs[0] || '')
+    });
     setModalOpen(true);
   };
 
@@ -143,6 +181,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
         ...editingProduct, 
         slug,
         images: validImages,
+        sub_category: editingProduct.sub_category || '',
         sales_availability: editingProduct.sales_availability || 'Both',
         retail_price: Number(editingProduct.retail_price) || 0,
         discount_price: isRetail && discPrice ? discPrice : undefined,
@@ -209,16 +248,89 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
         </div>
       </div>
 
-      {/* Search Input */}
-      <div className="relative max-w-md">
-        <input
-          type="text"
-          placeholder="Filter by name or SKU..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white border border-neutral-300 rounded-lg pl-3 pr-8 py-2 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
-        />
-        <Search className="w-4 h-4 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
+      {/* Filter Bar with Segment, Category & Subcategory filters */}
+      <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+          {/* Search Input */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by name, SKU or subcategory..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-neutral-50 border border-neutral-300 rounded-lg pl-3 pr-8 py-2 text-xs text-neutral-900 focus:outline-none focus:border-neutral-900"
+            />
+            <Search className="w-4 h-4 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
+          </div>
+
+          {/* Segment Filter */}
+          <div>
+            <select
+              value={filterSegment}
+              onChange={(e) => {
+                setFilterSegment(e.target.value);
+                setFilterSubCategory('All');
+              }}
+              className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2 text-xs text-neutral-900 font-medium"
+            >
+              <option value="All">All Segments</option>
+              <option value="Home">Home</option>
+              <option value="Hotel">Hotel</option>
+              <option value="Event">Event</option>
+            </select>
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <select
+              value={filterCategory}
+              onChange={(e) => {
+                setFilterCategory(e.target.value);
+                setFilterSubCategory('All');
+              }}
+              className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2 text-xs text-neutral-900 font-medium"
+            >
+              <option value="All">All Categories</option>
+              <option value="HOME DECOR">Textile (Home Decor)</option>
+              <option value="ART DECOR">Art Decor</option>
+              <option value="ELECTRIC DECOR">Electric Decor</option>
+            </select>
+          </div>
+
+          {/* Subcategory Filter */}
+          <div>
+            <select
+              value={filterSubCategory}
+              onChange={(e) => setFilterSubCategory(e.target.value)}
+              className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2 text-xs text-neutral-900 font-medium"
+            >
+              <option value="All">All Subcategories ({adminAvailableSubcategories.length})</option>
+              {adminAvailableSubcategories.map((sub) => (
+                <option key={sub} value={sub}>{sub}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {(search || filterSegment !== 'All' || filterCategory !== 'All' || filterSubCategory !== 'All') && (
+          <div className="flex items-center justify-between pt-1 border-t border-neutral-100 text-xs">
+            <span className="text-neutral-500 font-medium">
+              Showing <strong>{filteredProducts.length}</strong> of {products.length} products
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setFilterSegment('All');
+                setFilterCategory('All');
+                setFilterSubCategory('All');
+              }}
+              className="text-amber-800 hover:underline font-bold text-xs"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -228,7 +340,7 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
             <thead className="bg-neutral-50 text-neutral-500 font-bold uppercase tracking-wider border-b border-neutral-200">
               <tr>
                 <th className="p-3.5">Product</th>
-                <th className="p-3.5">Pipeline & Segment</th>
+                <th className="p-3.5">Pipeline &amp; Subcategory</th>
                 <th className="p-3.5">Prices (Retail / Wholesale)</th>
                 <th className="p-3.5">Stock / MOQ</th>
                 <th className="p-3.5">Status</th>
@@ -250,12 +362,23 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
 
                   <td className="p-3.5">
                     <div className="space-y-0.5">
-                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                        p.production_type === 'Handmade' ? 'bg-amber-100 text-amber-900' : 'bg-neutral-900 text-white'
-                      }`}>
-                        {p.production_type}
-                      </span>
-                      <div className="text-[11px] text-neutral-600">{p.segment} • {p.product_type}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                          p.production_type === 'Handmade' ? 'bg-amber-100 text-amber-900' : 'bg-neutral-900 text-white'
+                        }`}>
+                          {p.production_type}
+                        </span>
+                        <span className="text-[11px] text-neutral-600 font-medium">
+                          {p.segment} • {p.product_type === 'HOME DECOR' ? 'Textile' : p.product_type}
+                        </span>
+                      </div>
+                      {p.sub_category ? (
+                        <span className="inline-block mt-0.5 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-1.5 py-0.5 rounded">
+                          {p.sub_category}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-neutral-400 italic">No subcategory</span>
+                      )}
                     </div>
                   </td>
 
@@ -409,10 +532,18 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
                     </div>
 
                     <div>
-                      <label className="block font-bold text-neutral-800 mb-1">Segment</label>
+                      <label className="block font-bold text-neutral-800 mb-1">Segment *</label>
                       <select
                         value={editingProduct.segment || 'Home'}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, segment: e.target.value as Segment })}
+                        onChange={(e) => {
+                          const nextSeg = e.target.value as Segment;
+                          const availableSubs = getSubcategoriesFor(nextSeg, editingProduct.product_type || 'HOME DECOR');
+                          setEditingProduct({ 
+                            ...editingProduct, 
+                            segment: nextSeg,
+                            sub_category: availableSubs.includes(editingProduct.sub_category || '') ? editingProduct.sub_category : (availableSubs[0] || '')
+                          });
+                        }}
                         className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900"
                       >
                         <option value="Home">Home</option>
@@ -421,17 +552,74 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({ products, onRefres
                       </select>
                     </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block font-bold text-neutral-800 mb-1">Product Type / Category</label>
+                    <div>
+                      <label className="block font-bold text-neutral-800 mb-1">Product Type / Category *</label>
                       <select
                         value={editingProduct.product_type || 'HOME DECOR'}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, product_type: e.target.value as ProductType })}
+                        onChange={(e) => {
+                          const nextType = e.target.value as ProductType;
+                          const availableSubs = getSubcategoriesFor(editingProduct.segment || 'Home', nextType);
+                          setEditingProduct({ 
+                            ...editingProduct, 
+                            product_type: nextType,
+                            sub_category: availableSubs.includes(editingProduct.sub_category || '') ? editingProduct.sub_category : (availableSubs[0] || '')
+                          });
+                        }}
                         className="w-full bg-neutral-50 border border-neutral-300 rounded-lg p-2.5 text-neutral-900 font-semibold"
                       >
-                        <option value="HOME DECOR">HOME DECOR</option>
-                        <option value="ART DECOR">ART DECOR</option>
-                        <option value="ELECTRIC DECOR">ELECTRIC DECOR</option>
+                        <option value="HOME DECOR">Textile (Home Decor)</option>
+                        <option value="ART DECOR">Art Decor</option>
+                        <option value="ELECTRIC DECOR">Electric Decor</option>
                       </select>
+                    </div>
+
+                    {/* DEDICATED SUBCATEGORY SELECTION */}
+                    <div className="sm:col-span-2 bg-gradient-to-r from-amber-50/80 via-orange-50/30 to-amber-50/50 border-2 border-amber-300/80 rounded-xl p-3.5 space-y-3 shadow-xs">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <label className="block font-bold text-neutral-900 text-xs uppercase tracking-wide flex items-center gap-1.5">
+                          <Layers className="w-4 h-4 text-amber-700" />
+                          <span>Sub Category (Selected Pipeline) *</span>
+                        </label>
+                        <span className="text-[10px] font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded shadow-xs">
+                          {editingProduct.segment || 'Home'} &gt; {editingProduct.product_type === 'ART DECOR' ? 'Art Decor' : editingProduct.product_type === 'ELECTRIC DECOR' ? 'Electric Decor' : 'Textile'}
+                        </span>
+                      </div>
+
+                      <select
+                        value={editingProduct.sub_category || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, sub_category: e.target.value })}
+                        className="w-full bg-white border border-amber-400 rounded-lg p-2.5 text-neutral-900 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none shadow-xs"
+                      >
+                        <option value="">-- Choose Sub Category --</option>
+                        {getSubcategoriesFor(editingProduct.segment || 'Home', editingProduct.product_type || 'HOME DECOR').map((sub) => (
+                          <option key={sub} value={sub}>
+                            {sub}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Quick Select Buttons */}
+                      <div className="space-y-1.5 pt-1 border-t border-amber-200/60">
+                        <span className="text-[10px] text-neutral-600 font-semibold block uppercase tracking-wider">
+                          Quick Presets ({getSubcategoriesFor(editingProduct.segment || 'Home', editingProduct.product_type || 'HOME DECOR').length} options):
+                        </span>
+                        <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                          {getSubcategoriesFor(editingProduct.segment || 'Home', editingProduct.product_type || 'HOME DECOR').map((sub) => (
+                            <button
+                              key={sub}
+                              type="button"
+                              onClick={() => setEditingProduct({ ...editingProduct, sub_category: sub })}
+                              className={`px-2.5 py-1 text-[11px] rounded-lg transition font-medium border text-left cursor-pointer ${
+                                editingProduct.sub_category === sub
+                                  ? 'bg-amber-600 text-white border-amber-700 font-bold shadow-xs scale-102'
+                                  : 'bg-white text-neutral-800 border-neutral-300 hover:bg-amber-100/50 hover:border-amber-400'
+                              }`}
+                            >
+                              {sub}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     {/* PRICING & DISCOUNT SECTION */}

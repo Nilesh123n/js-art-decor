@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `production_type` VARCHAR(50) NOT NULL DEFAULT 'Handmade',
   `segment` VARCHAR(50) NOT NULL DEFAULT 'Home',
   `product_type` VARCHAR(50) NOT NULL DEFAULT 'Bedsheet',
+  `sub_category` VARCHAR(100) NULL DEFAULT NULL,
   `sales_availability` VARCHAR(50) NOT NULL DEFAULT 'Both',
   `retail_price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `discount_price` DECIMAL(10,2) NULL DEFAULT NULL,
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   INDEX `idx_production_type` (`production_type`),
   INDEX `idx_segment` (`segment`),
   INDEX `idx_product_type` (`product_type`),
+  INDEX `idx_sub_category` (`sub_category`),
   INDEX `idx_sales_avail` (`sales_availability`),
   INDEX `idx_stock` (`stock_quantity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

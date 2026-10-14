@@ -26,6 +26,7 @@ if ($method === 'GET') {
             $p['is_new_arrival'] = (bool)$p['is_new_arrival'];
             $p['is_active'] = (bool)$p['is_active'];
             $p['short_description'] = $p['short_description'] ?? '';
+            $p['sub_category'] = $p['sub_category'] ?? '';
             $p['size'] = $p['size'] ?? '';
             $p['material'] = $p['material'] ?? '';
             $p['color'] = $p['color'] ?? '';
@@ -110,11 +111,11 @@ if ($method === 'POST') {
     try {
         $stmt = $pdo->prepare("
             INSERT INTO products (
-                name, slug, sku, description, short_description, segment, product_type, production_type,
+                name, slug, sku, description, short_description, segment, product_type, sub_category, production_type,
                 sales_availability, retail_price, discount_price, wholesale_price, min_wholesale_qty,
                 stock_quantity, size, material, color, is_featured, is_new_arrival, is_active, images, created_at, updated_at
             ) VALUES (
-                :name, :slug, :sku, :desc, :sdesc, :segment, :ptype, :prodtype,
+                :name, :slug, :sku, :desc, :sdesc, :segment, :ptype, :subcat, :prodtype,
                 :sales, :rprice, :dprice, :wprice, :minwqty,
                 :stock, :size, :material, :color, :feat, :newarr, :active, :imgs, NOW(), NOW()
             )
@@ -131,7 +132,8 @@ if ($method === 'POST') {
             ':desc' => $input['description'] ?? '',
             ':sdesc' => $input['short_description'] ?? '',
             ':segment' => $input['segment'] ?? 'Home',
-            ':ptype' => $input['product_type'] ?? 'Bedsheet',
+            ':ptype' => $input['product_type'] ?? 'HOME DECOR',
+            ':subcat' => $input['sub_category'] ?? '',
             ':prodtype' => $input['production_type'] ?? 'Handmade',
             ':sales' => $input['sales_availability'] ?? 'Both',
             ':rprice' => (float)$input['retail_price'],
@@ -173,7 +175,7 @@ if ($method === 'PUT') {
         $stmt = $pdo->prepare("
             UPDATE products SET
                 name = :name, slug = :slug, sku = :sku, description = :desc, short_description = :sdesc,
-                segment = :segment, product_type = :ptype, production_type = :prodtype, sales_availability = :sales,
+                segment = :segment, product_type = :ptype, sub_category = :subcat, production_type = :prodtype, sales_availability = :sales,
                 retail_price = :rprice, discount_price = :dprice, wholesale_price = :wprice, min_wholesale_qty = :minwqty,
                 stock_quantity = :stock, size = :size, material = :material, color = :color,
                 is_featured = :feat, is_new_arrival = :newarr, is_active = :active, images = :imgs, updated_at = NOW()
@@ -188,7 +190,8 @@ if ($method === 'PUT') {
             ':desc' => $input['description'] ?? '',
             ':sdesc' => $input['short_description'] ?? '',
             ':segment' => $input['segment'] ?? 'Home',
-            ':ptype' => $input['product_type'] ?? 'Bedsheet',
+            ':ptype' => $input['product_type'] ?? 'HOME DECOR',
+            ':subcat' => $input['sub_category'] ?? '',
             ':prodtype' => $input['production_type'] ?? 'Handmade',
             ':sales' => $input['sales_availability'] ?? 'Both',
             ':rprice' => (float)$input['retail_price'],

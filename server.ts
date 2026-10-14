@@ -334,6 +334,7 @@ async function startServer() {
             production_type VARCHAR(50) NOT NULL DEFAULT 'Handmade',
             segment VARCHAR(50) NOT NULL DEFAULT 'Home',
             product_type VARCHAR(50) NOT NULL DEFAULT 'HOME DECOR',
+            sub_category VARCHAR(100) NULL DEFAULT NULL,
             sales_availability VARCHAR(50) NOT NULL DEFAULT 'Both',
             retail_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             discount_price DECIMAL(10,2) NULL DEFAULT NULL,
@@ -358,16 +359,22 @@ async function startServer() {
           // Ignore if column already exists or MySQL syntax requires different alter
         }
 
+        try {
+          await mysqlPool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS sub_category VARCHAR(100) NULL DEFAULT NULL AFTER product_type;`);
+        } catch {
+          // Ignore if column already exists
+        }
+
         for (const p of productsDb) {
           const imagesJson = JSON.stringify(Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []));
           const discountVal = p.discount_price !== undefined && p.discount_price !== null && !isNaN(Number(p.discount_price)) && Number(p.discount_price) > 0 ? Number(p.discount_price) : null;
           await mysqlPool.query(
             `INSERT INTO products (
               id, name, slug, sku, description, short_description,
-              production_type, segment, product_type, sales_availability,
+              production_type, segment, product_type, sub_category, sales_availability,
               retail_price, discount_price, wholesale_price, stock_quantity, min_wholesale_qty,
               size, material, color, images, is_featured, is_new_arrival, is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
               name = VALUES(name),
               slug = VALUES(slug),
@@ -377,6 +384,7 @@ async function startServer() {
               production_type = VALUES(production_type),
               segment = VALUES(segment),
               product_type = VALUES(product_type),
+              sub_category = VALUES(sub_category),
               sales_availability = VALUES(sales_availability),
               retail_price = VALUES(retail_price),
               discount_price = VALUES(discount_price),
@@ -401,6 +409,7 @@ async function startServer() {
               p.production_type || "Handmade",
               p.segment || "Home",
               p.product_type || "HOME DECOR",
+              p.sub_category || "",
               p.sales_availability || "Both",
               Number(p.retail_price) || 0,
               discountVal,
@@ -656,6 +665,7 @@ async function startServer() {
           production_type VARCHAR(50) NOT NULL DEFAULT 'Handmade',
           segment VARCHAR(50) NOT NULL DEFAULT 'Home',
           product_type VARCHAR(50) NOT NULL DEFAULT 'HOME DECOR',
+          sub_category VARCHAR(100) NULL DEFAULT NULL,
           sales_availability VARCHAR(50) NOT NULL DEFAULT 'Both',
           retail_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
           wholesale_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -685,6 +695,7 @@ async function startServer() {
           production_type: r.production_type || "Handmade",
           segment: r.segment || "Home",
           product_type: r.product_type || "HOME DECOR",
+          sub_category: r.sub_category || "",
           sales_availability: r.sales_availability || "Both",
           retail_price: Number(r.retail_price) || 0,
           discount_price: r.discount_price !== null && r.discount_price !== undefined && !isNaN(Number(r.discount_price)) && Number(r.discount_price) > 0 ? Number(r.discount_price) : undefined,
@@ -769,7 +780,7 @@ async function startServer() {
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
 
-    const { q, segment, product_type, production_type, sales_availability, is_featured, is_new_arrival, all, include_inactive } = req.query;
+    const { q, segment, product_type, sub_category, production_type, sales_availability, is_featured, is_new_arrival, all, include_inactive } = req.query;
 
     const includeAll = all === "true" || include_inactive === "true";
     let filtered = includeAll ? [...productsDb] : productsDb.filter((p) => Boolean((p as any).is_active));
@@ -781,19 +792,24 @@ async function startServer() {
           p.name.toLowerCase().includes(query) ||
           (p.description && p.description.toLowerCase().includes(query)) ||
           (p.sku && p.sku.toLowerCase().includes(query)) ||
-          (p.short_description && p.short_description.toLowerCase().includes(query))
+          (p.short_description && p.short_description.toLowerCase().includes(query)) ||
+          (p.sub_category && p.sub_category.toLowerCase().includes(query))
       );
     }
 
-    if (segment) {
+    if (segment && segment !== 'All') {
       filtered = filtered.filter((p) => p.segment === segment);
     }
 
-    if (product_type) {
+    if (product_type && product_type !== 'All') {
       filtered = filtered.filter((p) => p.product_type === product_type);
     }
 
-    if (production_type) {
+    if (sub_category && sub_category !== 'All') {
+      filtered = filtered.filter((p) => p.sub_category === sub_category);
+    }
+
+    if (production_type && production_type !== 'All') {
       filtered = filtered.filter((p) => p.production_type === production_type);
     }
 
@@ -1445,6 +1461,7 @@ async function startServer() {
         production_type: body.production_type || "Handmade",
         segment: body.segment || "Home",
         product_type: body.product_type || "HOME DECOR",
+        sub_category: body.sub_category || "",
         sales_availability: body.sales_availability || "Both",
         retail_price: Number(body.retail_price) || 0,
         discount_price: body.discount_price !== undefined && body.discount_price !== null && !isNaN(Number(body.discount_price)) && Number(body.discount_price) > 0 ? Number(body.discount_price) : undefined,
@@ -1495,6 +1512,7 @@ async function startServer() {
         ...productsDb[idx], 
         ...body, 
         id: targetId,
+        sub_category: body.sub_category !== undefined ? body.sub_category : (productsDb[idx].sub_category || ""),
         images: Array.isArray(images) ? images : (images ? [images] : []),
         retail_price: body.retail_price !== undefined ? Number(body.retail_price) : productsDb[idx].retail_price,
         discount_price: body.discount_price !== undefined ? (Number(body.discount_price) > 0 ? Number(body.discount_price) : undefined) : productsDb[idx].discount_price,

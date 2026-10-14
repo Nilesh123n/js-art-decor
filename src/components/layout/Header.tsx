@@ -182,6 +182,31 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="text-[10px] text-[#D4A017] font-semibold">Chandeliers & Lamps</span>
                 </button>
                 <div className="my-1 border-t border-[#222222]" />
+                <div className="px-4 py-1 text-[10px] text-[#A3A3A3] font-bold uppercase tracking-wider">
+                  Spaces &amp; Segments
+                </div>
+                <button
+                  onClick={() => { onNavigate('catalog', { segment: 'Home' }); setShopDropdownOpen(false); }}
+                  className="w-full text-left px-4 py-1.5 hover:bg-[#1A1A1A] text-[#DDDDDD] hover:text-[#D4A017] transition flex items-center justify-between"
+                >
+                  <span>Home Living</span>
+                  <span className="text-[10px] text-[#D4A017]">Residential</span>
+                </button>
+                <button
+                  onClick={() => { onNavigate('catalog', { segment: 'Hotel' }); setShopDropdownOpen(false); }}
+                  className="w-full text-left px-4 py-1.5 hover:bg-[#1A1A1A] text-[#DDDDDD] hover:text-[#D4A017] transition flex items-center justify-between"
+                >
+                  <span>Hotel &amp; Resort</span>
+                  <span className="text-[10px] text-[#D4A017]">Hospitality</span>
+                </button>
+                <button
+                  onClick={() => { onNavigate('catalog', { segment: 'Event' }); setShopDropdownOpen(false); }}
+                  className="w-full text-left px-4 py-1.5 hover:bg-[#1A1A1A] text-[#DDDDDD] hover:text-[#D4A017] transition flex items-center justify-between"
+                >
+                  <span>Event &amp; Wedding</span>
+                  <span className="text-[10px] text-[#D4A017]">Celebrations</span>
+                </button>
+                <div className="my-1 border-t border-[#222222]" />
                 <button
                   onClick={() => { onNavigate('catalog', { production_type: 'Handmade' }); setShopDropdownOpen(false); }}
                   className="w-full text-left px-4 py-2 hover:bg-[#1A1A1A] text-[#CCCCCC] hover:text-white transition"
@@ -198,9 +223,9 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <button
-              onClick={() => onNavigate('wholesale-tree')}
+              onClick={() => onNavigate('about-us')}
               className={`py-1 border-b-2 transition-all ${
-                activeView === 'wholesale-tree'
+                activeView === 'about-us' || activeView === 'about'
                   ? 'border-[#D4A017] text-[#D4A017] font-bold'
                   : 'border-transparent text-[#DDDDDD] hover:text-[#D4A017]'
               }`}
@@ -358,8 +383,10 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
-              onClick={() => { onNavigate('wholesale-tree'); setMobileMenuOpen(false); }}
-              className="p-2 text-left hover:text-[#D4A017] transition border-b border-[#1A1A1A]"
+              onClick={() => { onNavigate('about-us'); setMobileMenuOpen(false); }}
+              className={`p-2 text-left hover:text-[#D4A017] transition border-b border-[#1A1A1A] ${
+                activeView === 'about-us' || activeView === 'about' ? 'text-[#D4A017] font-bold' : ''
+              }`}
             >
               ABOUT US
             </button>

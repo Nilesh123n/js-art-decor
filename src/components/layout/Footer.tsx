@@ -17,7 +17,7 @@ export const Footer: React.FC<FooterProps> = ({ settings, onNavigate }) => {
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1">
             <span>© 2024 JSArt&Decor. All Rights Reserved.</span>
             <span className="hidden md:inline text-[#333333]">|</span>
-            <button onClick={() => onNavigate('wholesale-tree')} className="hover:text-[#D4A017] transition">
+            <button onClick={() => onNavigate('about-us')} className="hover:text-[#D4A017] transition">
               About Us
             </button>
             <span className="text-[#333333]">|</span>
@@ -25,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({ settings, onNavigate }) => {
               Track Order
             </button>
             <span className="text-[#333333]">|</span>
-            <button onClick={() => onNavigate('contact')} className="hover:text-[#D4A017] transition">
+            <button onClick={() => onNavigate('privacy-policy')} className="hover:text-[#D4A017] transition">
               Privacy Policy
             </button>
             <span className="text-[#333333]">|</span>

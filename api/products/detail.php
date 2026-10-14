@@ -41,6 +41,7 @@ try {
     $p['is_new_arrival'] = (bool)$p['is_new_arrival'];
     $p['is_active'] = (bool)$p['is_active'];
     $p['short_description'] = $p['short_description'] ?? '';
+    $p['sub_category'] = $p['sub_category'] ?? '';
     $p['size'] = $p['size'] ?? '';
     $p['material'] = $p['material'] ?? '';
     $p['color'] = $p['color'] ?? '';
